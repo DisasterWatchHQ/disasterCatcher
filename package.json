@@ -28,6 +28,7 @@
     "nodemon": "^3.1.7"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7"
   }
 }
