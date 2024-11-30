@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const locationSchema = new Schema({
   latitude: { type: Number, required: true },
@@ -10,7 +10,11 @@ const userSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  type: { type: String, required: true, enum: ["normal", "verified", "anonymous"] },
+  type: { 
+    type: String, 
+    required: true, 
+    enum: ["registered", "verified", "anonymous", "admin"],
+    default: "anonymous" },
   location: { type: locationSchema, required: false },
   associated_department: { 
     type: String, 
