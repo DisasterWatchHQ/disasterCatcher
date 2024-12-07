@@ -1,20 +1,52 @@
 import User from "../models/users.js";
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+
 // Helper function to check MongoDB ObjectID validity
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
+// Create User
 export const createUser = async (req, res) => {
   try {
     const { name, email, password, type } = req.body;
 
+    // Basic validation
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required." });
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required."
+      });
     }
 
-    const user = await User.create({ name, email, password, type });
-    res.status(201).json({ message: "User created successfully.", user });
+    // Check existing user
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered."
+      });
+    }
+
+    // Create new user
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password,
+      type: type || "anonymous"
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully.",
+      user
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error creating user.", error: error.message });
+    console.error('Create User Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error creating user."
+    });
   }
 };
 
