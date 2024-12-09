@@ -32,3 +32,27 @@ export const connectMongoose = async () => {
     process.exit(1);
   }
 };
+
+// For native mongodb client
+// export const getMongoClient = async () => {
+//   const uri = process.env.MONGODB_URI;
+  
+//   const client = new MongoClient(uri, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//     serverApi: {
+//       version: ServerApiVersion.v1,
+//       strict: true,
+//       deprecationErrors: true,
+//     }
+//   });
+  
+//   try {
+//     await client.connect();
+//     console.log("Successfully connected to MongoDB!");
+//     return client;
+//   } catch (error) {
+//     console.error("MongoDB connection error:", error);
+//     throw error;
+//   }
+// };
