@@ -3,13 +3,13 @@ import cors from 'cors';
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
-import { dbConnection } from './utils/index.js';
+import { connectMongoose } from './utils/index.js';
 import { errorHandler, routeNotFound } from "./middlewares/errorMiddleware.js";
 import routes from "./routes/index.js";
 
 dotenv.config()
 
-dbConnection();
+connectMongoose();
 
 const PORT = process.env.PORT || 5000;
 
