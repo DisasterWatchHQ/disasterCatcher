@@ -55,9 +55,10 @@ const userSchema = new Schema({
   toObject: { virtuals: true }
 });
 
-// Pre-save hook to hash passwords
-userSchema.pre('save', async function (next) {
+/// Password hashing middleware
+userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
+  
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -67,25 +68,27 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// Method to compare passwords
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+// Compare password method
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
-// Transform output to hide sensitive fields
-userSchema.set('toJSON', {
-  transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id;
-    delete ret.__v;
-    delete ret.password;
-    return ret;
-  }
-});
+// JSON transform
+userSchema.methods.toJSON = function() {
+  const userObject = this.toObject();
+  delete userObject.password;
+  delete userObject.__v;
+  return userObject;
+};
 
-// Indexes
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ type: 1, location: 1 });
+/// Indexes
+userSchema.index({ email: 1 });
+userSchema.index({ type: 1 });
+userSchema.index({ 'location.latitude': 1, 'location.longitude': 1 });
 
 const User = mongoose.model('User', userSchema);
 export default User;
