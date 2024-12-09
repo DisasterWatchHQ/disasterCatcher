@@ -7,22 +7,53 @@ const locationSchema = new Schema({
 });
 
 const userSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  name: { 
+    type: String, 
+    required: [true, 'Name is required'],
+    trim: true
+  },
+  email: { 
+    type: String, 
+    required: [true, 'Email is required'], 
+    unique: true,
+  lowercase: true,
+  trim: true,
+   match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+  },
+  password: { 
+    type: String, 
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters']
+  },
   type: { 
     type: String, 
     required: true, 
-    enum: ["registered", "verified", "anonymous", "admin"],
-    default: "anonymous" },
-  location: { type: locationSchema, required: false },
+    enum: {
+      values: ["registered", "verified", "anonymous", "admin"],
+      message: '{VALUE} is not supported'
+    },
+    default: "anonymous" 
+  },
+  location: locationSchema,
   associated_department: { 
     type: String, 
-    required: false, 
-    enum: ["Fire Department", "Police", "Disaster Response Team"] 
+    enum: {
+      values: ["Fire Department", "Police", "Disaster Response Team"],
+      message: '{VALUE} is not a valid department'
+    }
   },
-  verification_status: { type: Boolean, required: false }
-}, { timestamps: true });
+  verification_status: { 
+    type: Boolean, 
+    default: false 
+  },
+  lastLogin: {
+    type: Date
+  }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
 
 // Pre-save hook to hash passwords
 userSchema.pre('save', async function (next) {
