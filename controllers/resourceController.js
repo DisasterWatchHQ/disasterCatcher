@@ -3,7 +3,13 @@ import Resource from '../models/resources.js';
 export const createResource = async (req, res) => {
   try {
     const { name, type, location, contact, availability_status } = req.body;
-    const newResource = await Resource.create({ name, type, location, contact, availability_status });
+    const newResource = await Resource.create({ 
+      name, 
+      type, 
+      location, 
+      contact, 
+      availability_status 
+    });
     res.status(201).json(newResource);
   } catch (error) {
     res.status(400).json({ error: error.message });
