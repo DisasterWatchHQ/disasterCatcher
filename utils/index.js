@@ -1,9 +1,6 @@
-import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import gridfsStream from "gridfs-stream";
-import dotenv from "dotenv";
-import bcryptjs from "bcryptjs";
-import { MongoClient, ServerApiVersion } from "mongodb";    
+import { MongoClient, ServerApiVersion } from "mongodb";
+import dotenv from "dotenv";  
 
 dotenv.config()
 
