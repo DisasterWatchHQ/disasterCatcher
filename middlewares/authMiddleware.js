@@ -31,18 +31,27 @@ export const protectRoute = async (req, res, next) => {
   }
 };
 
+// Middleware for checking user types
 export const verifyUserType = (allowedTypes) => {
   return (req, res, next) => {
-    if (!req.user || !allowedTypes.includes(req.user.userType)) {
-      return res.status(403).json({
-        status: false,
-        message: "Access denied. Insufficient permissions.",
+    try {
+      // Check if user exists and has the correct type
+      if (!req.user || !allowedTypes.includes(req.user.type)) { // Changed from userType to type
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. Insufficient permissions.",
+        });
+      }
+      next();
+    } catch (error) {
+      console.error('User Type Verification Error:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Error verifying user type.",
       });
     }
-    next();
   };
 };
-
 
 export const verifyVerifiedUser = async (req, res, next) => {
   try {
