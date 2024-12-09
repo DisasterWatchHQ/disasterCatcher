@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/users.js";
 
+// Main authentication middleware
 export const protectRoute = async (req, res, next) => {
   try {
     let token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
@@ -11,6 +12,7 @@ export const protectRoute = async (req, res, next) => {
       user = await User.findById(decodedToken.userId);
       if (!user) throw new Error("Invalid token or user not found");
     } else {
+      // Handle anonymous users
       if (!req.session.pseudoUser) {
         req.session.pseudoUser = {
           id: `anon_${Date.now()}`,
@@ -24,7 +26,8 @@ export const protectRoute = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ status: false, message: "Not authorized." });
+    console.error('Auth Error:', error);
+    return res.status(401).json({ success: false, message: "Not authorized." });
   }
 };
 
