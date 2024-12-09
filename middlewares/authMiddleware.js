@@ -53,19 +53,22 @@ export const verifyUserType = (allowedTypes) => {
   };
 };
 
+// Middleware for verified users
 export const verifyVerifiedUser = async (req, res, next) => {
   try {
-    if (!req.user?.isVerified) {
+    // Check if user exists and is verified
+    if (!req.user || !req.user.verification_status) { // Changed from isVerified to verification_status
       return res.status(403).json({
-        status: false,
+        success: false,
         message: "Access denied. This action requires a verified user.",
       });
     }
     next();
   } catch (error) {
+    console.error('Verified User Check Error:', error);
     return res.status(500).json({
-      status: false,
-      message: "Internal server error.",
+      success: false,
+      message: "Error checking user verification status.",
     });
   }
 };
