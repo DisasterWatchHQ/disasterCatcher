@@ -1,4 +1,9 @@
 import User from '../models/user.js';
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+
+// Helper function to check MongoDB ObjectID validity
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const createUser = async (req, res) => {
   try {
