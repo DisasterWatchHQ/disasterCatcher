@@ -73,19 +73,22 @@ export const verifyVerifiedUser = async (req, res, next) => {
   }
 };
 
+// Middleware for admin users
 export const verifyAdmin = async (req, res, next) => {
   try {
-    if (req.user?.userType !== "admin") {
+    // Check if user exists and is admin
+    if (!req.user || req.user.type !== "admin") { // Changed from userType to type
       return res.status(403).json({
-        status: false,
-        message: "Access denied. Admin privileges are required.",
+        success: false,
+        message: "Access denied. Admin privileges required.",
       });
     }
     next();
   } catch (error) {
+    console.error('Admin Verification Error:', error);
     return res.status(500).json({
-      status: false,
-      message: "Internal server error.",
+      success: false,
+      message: "Error verifying admin status.",
     });
   }
 };
