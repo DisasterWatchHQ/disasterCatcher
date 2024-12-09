@@ -50,12 +50,39 @@ export const createUser = async (req, res) => {
   }
 };
 
-export const getUsers = async (req, res) => {
+// Get All Users with Pagination
+export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
-    res.status(200).json(users);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const { type, email } = req.query;
+
+    const query = {};
+    if (type) query.type = type;
+    if (email) query.email = new RegExp(email, 'i');
+
+    const users = await User.find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .select('-password');
+
+    const total = await User.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        current: page,
+        total: Math.ceil(total / limit),
+        count: users.length,
+        totalRecords: total
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error retrieving users."
+    });
   }
 };
 
