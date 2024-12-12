@@ -1,19 +1,35 @@
 import mongoose, { Schema } from 'mongoose';
 
-// Subschema for location
 const locationSchema = new Schema({
-  latitude: { type: Number, required: true, min: -90, max: 90 },
-  longitude: { type: Number, required: true, min: -180, max: 180 }
+  type: { 
+    type: String, 
+    required: true, 
+    enum: ['point', 'address'] 
+  },
+  coordinates: {
+    type: [Number], //format -> [longitude, latitude]
+    index: '2dsphere'
+  },
+  address: {
+    formatted_address: String,
+    city: String,
+    district: String,
+    province: String,
+    details: String
+  }
 });
 
-// Subschema for contact information
+//add index for geospatial queries
+locationSchema.index({ coordinates: '2dsphere' });
+
+//subschema for contact information
 const contactSchema = new Schema({
   phone: { 
     type: String, 
     required: true, 
     validate: {
       validator: function(v) {
-        return /^[\d+\s()-]+$/.test(v); // Basic phone number format validation
+        return /^[\d+\s()-]+$/.test(v);
       },
       message: props => `${props.value} is not a valid phone number!`
     }
@@ -23,34 +39,30 @@ const contactSchema = new Schema({
     required: true, 
     validate: {
       validator: function(v) {
-        return /^\S+@\S+\.\S+$/.test(v); // Email format validation
+        return /^\S+@\S+\.\S+$/.test(v);
       },
       message: props => `${props.value} is not a valid email!`
     }
   }
 });
 
-// Main schema for resources
+//main schema resources
 const resourceSchema = new Schema({
   name: { type: String, required: true },
   type: { 
     type: String, 
     required: true, 
-    enum: ['hospital', 'shelter', 'police station', 'fire station', 'clinic'], // Define types of resources
+    enum: ['hospital', 'shelter', 'police station', 'fire station', 'clinic']
   },
-  location: { type: locationSchema, required: true }, // Use location subschema
-  contact: { type: contactSchema, required: true },  // Use contact subschema
+  location: { type: locationSchema, required: true },
+  contact: { type: contactSchema, required: true },
   availability_status: {
     type: String,
     required: true,
-    enum: ['open', 'closed', 'under maintenance'], // Define availability status options
+    enum: ['open', 'closed', 'under maintenance']
   }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+}, { timestamps: true });
 
-// Optional: Geospatial index for location if you plan to use proximity-based queries
-resourceSchema.index({ location: '2dsphere' }); // Enables geospatial queries
-
-// Transform function for cleaner API output
 resourceSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
@@ -59,6 +71,5 @@ resourceSchema.set('toJSON', {
   }
 });
 
-// Model creation
 const Resource = mongoose.model('Resource', resourceSchema);
 export default Resource;
