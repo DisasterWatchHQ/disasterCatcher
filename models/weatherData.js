@@ -1,6 +1,13 @@
 import mongoose, { Schema } from 'mongoose';
 
-// Subschema for forecast data
+// Weather alert/anomaly schema
+const weatherAlertSchema = new Schema({
+  type: { type: String, required: true }, // e.g., 'storm', 'flood', 'extreme_temperature'
+  severity: { type: String, required: true, enum: ['low', 'medium', 'high'] },
+  description: { type: String, required: true },
+  start_time: { type: Date, required: true },
+  end_time: { type: Date }
+});
 const forecastSchema = new Schema({
   date: { type: Date, required: true },
   temperature: { type: Number, required: true },
