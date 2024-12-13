@@ -56,14 +56,6 @@ const weatherDataSchema = new Schema({
 // Geospatial index
 weatherDataSchema.index({ location: '2dsphere' });
 
-// Transform function for cleaner output
-weatherDataSchema.set('toJSON', {
-  transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id;
-    delete ret.__v;
-  }
-});
 
 // Model export
 const WeatherData = mongoose.model('WeatherData', weatherDataSchema);
