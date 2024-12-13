@@ -1,9 +1,14 @@
 import mongoose, { Schema } from 'mongoose';
 
-// Subschema for location
 const locationSchema = new Schema({
   latitude: { type: Number, required: true, min: -90, max: 90 },
-  longitude: { type: Number, required: true, min: -180, max: 180 }
+  longitude: { type: Number, required: true, min: -180, max: 180 },
+  address: {
+    city: { type: String, required: true },
+    district: { type: String, required: true },
+    province: { type: String, required: true },
+    details: String
+  }
 });
 
 // Main schema for incident reports
