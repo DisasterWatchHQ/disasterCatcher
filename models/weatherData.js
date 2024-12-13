@@ -8,6 +8,18 @@ const weatherAlertSchema = new Schema({
   start_time: { type: Date, required: true },
   end_time: { type: Date }
 });
+
+// Current weather schema
+const currentWeatherSchema = new Schema({
+  temperature: { type: Number, required: true },
+  feels_like: { type: Number, required: true },
+  humidity: { type: Number, required: true },
+  wind_speed: { type: Number, required: true },
+  wind_direction: { type: Number, required: true },
+  description: { type: String, required: true },
+  icon: { type: String, required: true }
+});
+
 const forecastSchema = new Schema({
   date: { type: Date, required: true },
   temperature: { type: Number, required: true },
