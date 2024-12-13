@@ -38,11 +38,25 @@ export const getCurrentLocationWeather = async (req, res) => {
   }
 };
 
-export const getWeatherDataById = async (req, res) => {
+export const getSavedLocationWeather = async (req, res) => {
   try {
-    const weatherData = await WeatherData.findById(req.params.id);
-    if (!weatherData) return res.status(404).json({ message: 'Weather Data not found' });
-    res.status(200).json(weatherData);
+    const { locationId } = req.params;
+    const savedLocation = await SavedLocation.findOne({
+      user_id: req.user.id,
+      'locations._id': locationId
+    });
+
+    if (!savedLocation) {
+      return res.status(404).json({ message: 'Saved location not found' });
+    }
+
+    const location = savedLocation.locations.id(locationId);
+    const weather = await getCurrentLocationWeather({
+      query: {
+        latitude: location.coordinates[1],
+        longitude: location.coordinates[0]
+      }
+    }, res);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
