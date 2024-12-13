@@ -1,12 +1,16 @@
 import AdminLog from '../models/adminLogs.js';
 
-export const createAdminLog = async (req, res) => {
+export const createSystemLog = async (adminId, action, targetType, targetId, details) => {
   try {
-    const { admin_id, action, description } = req.body;
-    const newLog = await AdminLog.create({ admin_id, action, description });
-    res.status(201).json(newLog);
+    return await AdminLog.create({
+      admin_id: adminId,
+      action,
+      target_type: targetType,
+      target_id: targetId,
+      details
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error creating admin log:', error);
   }
 };
 
