@@ -1,7 +1,8 @@
 import express from 'express';
 import { 
   createIncidentReport, 
-  getIncidentReports, 
+  getIncidentReports,
+  getNearbyIncidents, 
   getIncidentReportById, 
   updateIncidentReport, 
   deleteIncidentReport 
@@ -12,10 +13,12 @@ const router = express.Router();
 
 router.use(protectRoute);
 
-router.post('/', createIncidentReport);
+router.post('/', verifyUserType(['admin', 'verified']), createIncidentReport);
+router.put('/:id', verifyUserType(['admin', 'verified']), updateIncidentReport);
+router.delete('/:id', verifyUserType(['admin', 'verified']), deleteIncidentReport);
+
 router.get('/', getIncidentReports);
+router.get('/nearby', getNearbyIncidents);
 router.get('/:id', getIncidentReportById);
-router.put('/:id', updateIncidentReport);
-router.delete('/:id', deleteIncidentReport);
 
 export default router;
