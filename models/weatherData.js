@@ -20,11 +20,16 @@ const currentWeatherSchema = new Schema({
   icon: { type: String, required: true }
 });
 
+// Forecast schema
 const forecastSchema = new Schema({
   date: { type: Date, required: true },
-  temperature: { type: Number, required: true },
-  rainfall: { type: Number, required: true },
-  wind_speed: { type: Number, required: true }
+  temperature_max: { type: Number, required: true },
+  temperature_min: { type: Number, required: true },
+  humidity: { type: Number, required: true },
+  wind_speed: { type: Number, required: true },
+  description: { type: String, required: true },
+  icon: { type: String, required: true },
+  precipitation_probability: { type: Number, required: true }
 });
 
 // Main schema for weather data
