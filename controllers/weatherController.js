@@ -10,10 +10,29 @@ export const getCurrentLocationWeather = async (req, res) => {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
-export const getWeatherData = async (req, res) => {
-  try {
-    const weatherData = await WeatherData.find();
-    res.status(200).json(weatherData);
+    // Check if we have recent data (less than 2 hours old)
+    const recentData = await WeatherData.findOne({
+      'location.coordinates': {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)]
+          },
+          $maxDistance: 1000 // 1km radius
+        }
+      },
+      last_updated: { $gte: new Date(Date.now() - 2 * 60 * 60 * 1000) }
+    });
+
+    if (recentData) {
+      return res.status(200).json(recentData);
+    }
+
+    // Fetch new data from OpenWeather API
+    const weatherData = await WeatherService.fetchWeatherData(latitude, longitude);
+    const savedData = await WeatherData.create(weatherData);
+
+    res.status(200).json(savedData);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
