@@ -56,7 +56,17 @@ const weatherDataSchema = new Schema({
 // Geospatial index
 weatherDataSchema.index({ location: '2dsphere' });
 
-
-// Model export
 const WeatherData = mongoose.model('WeatherData', weatherDataSchema);
 export default WeatherData;
+
+// User saved locations schema (add to your User model or create new model)
+const savedLocationSchema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  locations: [{
+    name: { type: String, required: true },
+    coordinates: {
+      type: [Number],
+      required: true
+    }
+  }]
+});
