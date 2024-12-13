@@ -1,14 +1,14 @@
 import WeatherData from '../models/weatherData.js';
+import { WeatherService } from '../utils/weatherService.js';
+import { createSystemLog } from './adminLogsController.js';
 
-export const createWeatherData = async (req, res) => {
+export const getCurrentLocationWeather = async (req, res) => {
   try {
-    const { location, current_weather, forecast, last_updated } = req.body;
-    const newWeatherData = await WeatherData.create({ location, current_weather, forecast, last_updated });
-    res.status(201).json(newWeatherData);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+    const { latitude, longitude } = req.query;
+    
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'Latitude and longitude are required' });
+    }
 
 export const getWeatherData = async (req, res) => {
   try {
