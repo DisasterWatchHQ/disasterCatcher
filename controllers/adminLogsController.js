@@ -62,13 +62,14 @@ export const getAdminLogs = async (req, res) => {
 
 export const getAdminLogById = async (req, res) => {
   try {
-    const log = await AdminLog.findById(req.params.id).populate('admin_id');
-    if (!log) return res.status(404).json({ message: 'Admin Log not found' });
+    const log = await AdminLog.findById(req.params.id)
+      .populate('admin_id', 'name email');
+    
+    if (!log) return res.status(404).json({ message: 'Log not found' });
     res.status(200).json(log);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-};
 
 export const updateAdminLog = async (req, res) => {
   try {
