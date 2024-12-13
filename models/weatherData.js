@@ -53,8 +53,8 @@ const weatherDataSchema = new Schema({
   last_updated: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Geospatial index for location
-weatherDataSchema.index({ location: '2dsphere' }); // Enables geospatial queries
+// Geospatial index
+weatherDataSchema.index({ location: '2dsphere' });
 
 // Transform function for cleaner output
 weatherDataSchema.set('toJSON', {
