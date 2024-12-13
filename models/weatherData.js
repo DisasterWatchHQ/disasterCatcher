@@ -32,16 +32,26 @@ const forecastSchema = new Schema({
   precipitation_probability: { type: Number, required: true }
 });
 
-// Main schema for weather data
 const weatherDataSchema = new Schema({
   location: {
-    latitude: { type: Number, required: true, min: -90, max: 90 },
-    longitude: { type: Number, required: true, min: -180, max: 180 }
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: true
+    },
+    coordinates: {
+      type: [Number],
+      required: true
+    },
+    name: { type: String, required: true },
+    city: { type: String, required: true },
+    country: { type: String, required: true }
   },
-  current_weather: { type: String, required: true },
-  forecast: [forecastSchema], // Array of forecast objects
-  last_updated: { type: Date, required: true }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+  current_weather: { type: currentWeatherSchema, required: true },
+  forecast: [forecastSchema],
+  alerts: [weatherAlertSchema],
+  last_updated: { type: Date, default: Date.now }
+}, { timestamps: true });
 
 // Geospatial index for location
 weatherDataSchema.index({ location: '2dsphere' }); // Enables geospatial queries
