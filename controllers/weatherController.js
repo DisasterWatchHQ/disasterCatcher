@@ -62,22 +62,25 @@ export const getSavedLocationWeather = async (req, res) => {
   }
 };
 
-export const updateWeatherData = async (req, res) => {
+export const saveLocation = async (req, res) => {
   try {
-    const updatedWeatherData = await WeatherData.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updatedWeatherData) return res.status(404).json({ message: 'Weather Data not found' });
-    res.status(200).json(updatedWeatherData);
+    const { name, latitude, longitude } = req.body;
+
+    const savedLocation = await SavedLocation.findOneAndUpdate(
+      { user_id: req.user.id },
+      {
+        $push: {
+          locations: {
+            name,
+            coordinates: [longitude, latitude]
+          }
+        }
+      },
+      { new: true, upsert: true }
+    );
+
+    res.status(200).json(savedLocation);
   } catch (error) {
     res.status(400).json({ error: error.message });
-  }
-};
-
-export const deleteWeatherData = async (req, res) => {
-  try {
-    const deletedWeatherData = await WeatherData.findByIdAndDelete(req.params.id);
-    if (!deletedWeatherData) return res.status(404).json({ message: 'Weather Data not found' });
-    res.status(200).json({ message: 'Weather Data deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 };
