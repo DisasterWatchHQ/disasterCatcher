@@ -2,29 +2,25 @@ import mongoose, { Schema } from 'mongoose';
 
 // Define the schema for the Feedback collection
 const feedbackSchema = new Schema({
-  user_id: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', // Reference to `users` collection
-    required: true 
-  },
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   feedback_type: { 
     type: String, 
-    required: true, 
-    enum: ['app issue', 'report dispute', 'suggestion', 'general feedback'], // Define feedback types
+    required: true,
+    enum: ['bug', 'feature_request', 'complaint', 'suggestion', 'other']
   },
-  message: { 
-    type: String, 
-    required: true, 
-    minlength: [5, 'Message must be at least 5 characters long'], // Ensure message has a minimum length
-    trim: true // Remove leading/trailing whitespace
+  message: { type: String, required: true },
+  status: {
+    type: String,
+    required: true,
+    enum: ['pending', 'in_progress', 'resolved', 'dismissed'],
+    default: 'pending'
   },
-  status: { 
-    type: String, 
-    required: true, 
-    enum: ['new', 'reviewed', 'resolved'], // Define status options
-    default: 'new' // Default to 'new'
+  admin_response: {
+    message: String,
+    responded_by: { type: Schema.Types.ObjectId, ref: 'User' },
+    responded_at: Date
   }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+}, { timestamps: true });
 
 // Transform function for cleaner output
 feedbackSchema.set('toJSON', {

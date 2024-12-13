@@ -1,40 +1,49 @@
 import mongoose, { Schema } from 'mongoose';
 
-// Define the schema for Admin Logs collection
 const adminLogSchema = new Schema({
   admin_id: { 
     type: Schema.Types.ObjectId, 
-    ref: 'User', // Reference to `users` collection
-    required: true,
-    validate: {
-      validator: function(v) {
-        return v && v.isVerified === true; // Ensure the user is verified (requires `isVerified` field in `User`)
-      },
-      message: 'Admin must be a verified user'
-    }
+    ref: 'User',
+    required: true
   },
   action: { 
     type: String, 
     required: true, 
-    enum: ['verified report', 'sent alert', 'deleted report', 'updated status'], // Define possible actions
+    enum: [
+      'LOGIN',
+      'LOGOUT',
+      'CREATE_RESOURCE',
+      'UPDATE_RESOURCE',
+      'DELETE_RESOURCE',
+      'VERIFY_REPORT',
+      'UPDATE_REPORT_STATUS',
+      'DELETE_REPORT',
+      'UPDATE_USER_STATUS'
+    ]
   },
-  description: { 
-    type: String, 
-    required: true, 
-    minlength: [5, 'Description must be at least 5 characters long'], // Ensure description has a minimum length
-    trim: true // Remove leading/trailing whitespace
+  target_type: {
+    type: String,
+    required: true,
+    enum: ['resource', 'incident_report', 'user_report', 'user']
+  },
+  target_id: {
+    type: Schema.Types.ObjectId,
+    required: true
+  },
+  details: {
+    previous_state: Schema.Types.Mixed,
+    new_state: Schema.Types.Mixed,
+    message: String
   }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
-
-// Transform function for cleaner API output
-adminLogSchema.set('toJSON', {
-  transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id;
-    delete ret.__v;
-  }
+}, { 
+  timestamps: true 
 });
 
-// Model creation
+// Indexes for better query performance
+adminLogSchema.index({ admin_id: 1 });
+adminLogSchema.index({ action: 1 });
+adminLogSchema.index({ createdAt: -1 });
+adminLogSchema.index({ target_type: 1, target_id: 1 });
+
 const AdminLog = mongoose.model('AdminLog', adminLogSchema);
 export default AdminLog;

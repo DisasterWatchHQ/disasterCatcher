@@ -1,10 +1,7 @@
 import express from 'express';
 import { 
-  createAdminLog, 
   getAdminLogs, 
-  getAdminLogById, 
-  updateAdminLog, 
-  deleteAdminLog
+  getAdminLogById
 } from '../controllers/adminLogsController.js';
 import {
   protectRoute,
@@ -13,12 +10,9 @@ import {
 
 const router = express.Router();
 
-router.use(protectRoute, verifyUserType(["admin"]))
+router.use(protectRoute, verifyUserType(['admin', 'verified']));
 
-router.post('/', createAdminLog);
 router.get('/', getAdminLogs);
 router.get('/:id', getAdminLogById);
-router.put('/:id', updateAdminLog);
-router.delete('/:id', deleteAdminLog);
 
 export default router;
