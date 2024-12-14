@@ -14,9 +14,9 @@ const router = express.Router();
 
 router.post('/login', authenticateUser);
 
+router.post('/register', createUser);
 router.use(protectRoute);
 
-router.post('/', verifyUserType('admin'), createUser);
 router.get('/', verifyUserType('admin'), getAllUsers);
 router.get('/:id', getUserById);
 router.put('/:id', verifyUserType('admin'), updateUser);
