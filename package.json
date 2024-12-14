@@ -6,15 +6,14 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles"
   },
   "jest": {
-     "testEnvironment": "node",
-     "setupFiles": ["<rootDir>/jest.setup.js"],
-     "transform": {
-       "^.+\\.js$": "babel-jest"
-     }
-   },
+      "testEnvironment": "node",
+      "transform": {
+        "^.+\\.js$": "babel-jest"
+      }
+    },
   "keywords": [
     "disasterwatch"
   ],
