@@ -6,6 +6,7 @@ import userReportRoutes from './userReportRoutes.js';
 import incidentReportsRoutes from './incidentReportsRoutes.js';
 import feedbackRoutes from './feedbackRoutes.js';
 import weatherRoutes from './weatherRoutes.js';
+import alertsRoute from './alertsRoutes.js';
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use('/userReport', userReportRoutes);
 router.use('/incidentReport', incidentReportsRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/weather', weatherRoutes);
+router.use('/alerts',alertsRoute);
 
 export default router;
