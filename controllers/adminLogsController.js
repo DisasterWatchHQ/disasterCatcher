@@ -2,15 +2,22 @@ import AdminLog from '../models/adminLogs.js';
 
 export const createSystemLog = async (adminId, action, targetType, targetId, details) => {
   try {
-    return await AdminLog.create({
+    const detailsMap = details instanceof Map ? 
+      details : 
+      new Map(Object.entries(details));
+
+    const log = await AdminLog.create({
       admin_id: adminId,
       action,
       target_type: targetType,
       target_id: targetId,
-      details
+      details: detailsMap
     });
+
+    return log;
   } catch (error) {
     console.error('Error creating admin log:', error);
+    return null;
   }
 };
 
