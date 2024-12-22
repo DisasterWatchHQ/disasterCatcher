@@ -33,9 +33,9 @@ const adminLogSchema = new Schema({
     required: true
   },
   details: {
-    previous_state: Schema.Types.Mixed,
-    new_state: Schema.Types.Mixed,
-    message: String
+    type: Map,
+    of: Schema.Types.Mixed,
+    default: new Map()
   }
 }, { 
   timestamps: true 
@@ -46,6 +46,14 @@ adminLogSchema.index({ admin_id: 1 });
 adminLogSchema.index({ action: 1 });
 adminLogSchema.index({ createdAt: -1 });
 adminLogSchema.index({ target_type: 1, target_id: 1 });
+
+adminLogSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+  }
+});
 
 const AdminLog = mongoose.model('AdminLog', adminLogSchema);
 export default AdminLog;
