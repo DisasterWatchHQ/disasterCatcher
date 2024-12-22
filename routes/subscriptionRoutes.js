@@ -1,21 +1,19 @@
 import express from 'express';
 import { 
-  createSubscription, 
-  getSubscriptions, 
-  getSubscriptionById, 
-  updateSubscription, 
-  deleteSubscription 
+  createSubscription,
+  getMySubscription,
+  updateMySubscription,
+  deleteMySubscription
 } from '../controllers/subscriptionController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.use(protectRoute);
 
 router.post('/', createSubscription);
-router.get('/', getSubscriptions);
-router.get('/:id', getSubscriptionById);
-router.put('/:id', updateSubscription);
-router.delete('/:id', deleteSubscription);
+router.get('/my-subscription', getMySubscription);
+router.put('/my-subscription', updateMySubscription);
+router.delete('/my-subscription', deleteMySubscription);
 
 export default router;
