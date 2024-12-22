@@ -1,21 +1,23 @@
 import express from 'express';
 import { 
-  createNotification, 
-  getNotifications, 
-  getNotificationById, 
-  updateNotification, 
+  getMyNotifications,
+  getNotificationById,
+  markAsRead,
+  markAllAsRead,
   deleteNotification 
 } from '../controllers/notificationController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
+// Apply protection middleware
 router.use(protectRoute);
 
-router.post('/', createNotification);
-router.get('/', getNotifications);
+// Routes
+router.get('/my-notifications', getMyNotifications);
 router.get('/:id', getNotificationById);
-router.put('/:id', updateNotification);
+router.put('/:id/mark-read', markAsRead);
+router.put('/mark-all-read', markAllAsRead);
 router.delete('/:id', deleteNotification);
 
 export default router;

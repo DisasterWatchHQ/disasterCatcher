@@ -148,33 +148,38 @@ export const getIncidentReportById = async (req, res) => {
 
 export const updateIncidentReport = async (req, res) => {
   try {
-    // Check if user is authorized to update
     const report = await IncidentReports.findById(req.params.id);
-    if (!report) return res.status(404).json({ message: 'Incident report not found' });
+    if (!report) {
+      return res.status(404).json({ message: 'Incident report not found' });
+    }
 
-    if (req.user.role !== 'admin' && report.user_id.toString() !== req.user.id) {
+    // Check authorization
+    if (req.user.type !== 'admin' && report.user_id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to update this report' });
     }
 
+    const originalReport = report.toObject();
     const updatedReport = await IncidentReports.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { ...req.body },
       { new: true, runValidators: true }
     ).populate('user_id', 'name email')
-      .populate('verified_by', 'name email');
+     .populate('verified_by', 'name email');
 
-    await createSystemLog(
-      req.user.id,
-      'UPDATE_INCIDENT_REPORT',
-      'incident_report',
-      updatedReport._id,
-      {
-        previous_state: originalReport.toObject(),
-        new_state: updatedReport.toObject(),
-        message: `Incident report ${updatedReport.title} was updated`
-      }
-    );
-    
+    if (typeof createSystemLog === 'function') {
+      await createSystemLog(
+        req.user.id,
+        'UPDATE',
+        'incident_report',
+        updatedReport._id,
+        {
+          previous_state: originalReport,
+          new_state: updatedReport.toObject(),
+          message: `Incident report ${updatedReport.title} was updated`
+        }
+      );
+    }
+
     res.status(200).json(updatedReport);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -184,26 +189,30 @@ export const updateIncidentReport = async (req, res) => {
 export const deleteIncidentReport = async (req, res) => {
   try {
     const report = await IncidentReports.findById(req.params.id);
-    if (!report) return res.status(404).json({ message: 'Incident report not found' });
+    if (!report) {
+      return res.status(404).json({ message: 'Incident report not found' });
+    }
 
-    // Check if user is authorized to delete
-    if (req.user.role !== 'admin' && report.user_id.toString() !== req.user.id) {
+    // Check authorization
+    if (req.user.type !== 'admin' && report.user_id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to delete this report' });
     }
 
-    await report.remove();
-    
-    await createSystemLog(
-      req.user.id,
-      'DELETE_INCIDENT_REPORT',
-      'incident_report',
-      report._id,
-      {
-        previous_state: report.toObject(),
-        message: `Incident report ${report.title} was deleted`
-      }
-    );
-    
+    await IncidentReports.findByIdAndDelete(req.params.id);
+
+    if (typeof createSystemLog === 'function') {
+      await createSystemLog(
+        req.user.id,
+        'DELETE_INCIDENT_REPORT',
+        'incident_report',
+        report._id,
+        {
+          previous_state: report.toObject(),
+          message: `Incident report ${report.title} was deleted`
+        }
+      );
+    }
+
     res.status(200).json({ message: 'Incident report deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

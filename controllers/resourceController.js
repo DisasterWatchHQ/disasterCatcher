@@ -3,45 +3,72 @@ import { createSystemLog } from './adminLogsController.js';
 
 export const createResource = async (req, res) => {
   try {
-    const { name, type, location, contact, availability_status } = req.body;
+    const { 
+      name, 
+      category,
+      type, 
+      description,
+      location, 
+      contact, 
+      availability_status,
+      content 
+    } = req.body;
     
-    //get location data
-    let locationData = {
-      type: location.type
+    // Create base resource data
+    const resourceData = {
+      name,
+      category,
+      type,
+      contact,
+      added_by: req.user.id
     };
 
-    //check location type
-    if (location.type === 'point') {
-      locationData.coordinates = [
-        parseFloat(location.longitude),
-        parseFloat(location.latitude)
-      ];
-    }
-
-    //if locationdata type = address -> set it in sub schema
-    if (location.address) {
-      locationData.address = {
-        formatted_address: location.address.formatted_address,
-        city: location.address.city,
-        district: location.address.district,
-        province: location.address.province,
-        details: location.address.details
+    // Add category-specific fields
+    if (category === 'facility') {
+      let locationData = {
+        type: location.type
       };
+
+      if (location.type === 'point') {
+        locationData.coordinates = [
+          parseFloat(location.longitude),
+          parseFloat(location.latitude)
+        ];
+      }
+
+      if (location.address) {
+        locationData.address = {
+          formatted_address: location.address.formatted_address,
+          city: location.address.city,
+          district: location.address.district,
+          province: location.address.province,
+          details: location.address.details
+        };
+      }
+
+      resourceData.location = locationData;
+      resourceData.availability_status = availability_status;
     }
 
-    //create new resource
-    const resource = new Resource({
-      name,
-      type,
-      location: locationData,
-      contact,
-      availability_status
-    });
+    if (category === 'guide') {
+      resourceData.description = description;
+      resourceData.content = content;
+    }
 
-    //save to database
+    const resource = new Resource(resourceData);
     const savedResource = await resource.save();
 
-    //send response
+    await createSystemLog(
+      req.user.id,
+      'CREATE_RESOURCE',
+      'resource',
+      savedResource._id,
+      {
+        new_state: savedResource.toObject(),
+        message: `New ${category} resource ${name} was created`
+      }
+    );
+
     res.status(201).json({
       success: true,
       data: savedResource
@@ -55,13 +82,11 @@ export const createResource = async (req, res) => {
   }
 };
 
-export const getResources = async (req, res) => {
+export const getFacilities = async (req, res) => {
   try {
-    //query params
     const {
       type,
       availability_status,
-      name,
       city,
       district,
       province,
@@ -69,13 +94,11 @@ export const getResources = async (req, res) => {
       page = 1
     } = req.query;
 
-    const query = {};
+    const query = { category: 'facility' };
 
     if (type) query.type = type;
     if (availability_status) query.availability_status = availability_status;
-    if (name) query.name = { $regex: name, $options: 'i' };
     
-    //check address
     if (city || district || province) {
       if (city) query['location.address.city'] = { $regex: city, $options: 'i' };
       if (district) query['location.address.district'] = { $regex: district, $options: 'i' };
@@ -85,15 +108,17 @@ export const getResources = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const resources = await Resource.find(query)
+      .populate('added_by', 'name email')
       .limit(parseInt(limit))
       .skip(skip);
 
     const total = await Resource.countDocuments(query);
 
     res.status(200).json({
+      success: true,
       resources,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
       totalResults: total
     });
   } catch (error) {
@@ -101,15 +126,59 @@ export const getResources = async (req, res) => {
   }
 };
 
-export const getNearbyResources = async (req, res) => {
+export const getGuides = async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 10000 } = req.query; // maxDistance in meters
+    const { type, limit = 10, page = 1 } = req.query;
+
+    const query = { category: 'guide' };
+    if (type) query.type = type;
+
+    const skip = (page - 1) * limit;
+
+    const resources = await Resource.find(query)
+      .populate('added_by', 'name email')
+      .limit(parseInt(limit))
+      .skip(skip);
+
+    const total = await Resource.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      resources,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      totalResults: total
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getEmergencyContacts = async (req, res) => {
+  try {
+    const resources = await Resource.find({ 
+      category: 'emergency_contact' 
+    }).populate('added_by', 'name email');
+
+    res.status(200).json({
+      success: true,
+      resources
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getNearbyFacilities = async (req, res) => {
+  try {
+    const { latitude, longitude, maxDistance = 10000, type } = req.query;
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
-    const resources = await Resource.find({
+    const query = {
+      category: 'facility',
       'location.coordinates': {
         $nearSphere: {
           $geometry: {
@@ -119,38 +188,35 @@ export const getNearbyResources = async (req, res) => {
           $maxDistance: parseFloat(maxDistance)
         }
       }
-    });
+    };
 
-    res.status(200).json(resources);
+    if (type) query.type = type;
+
+    const resources = await Resource.find(query)
+      .populate('added_by', 'name email');
+
+    res.status(200).json({
+      success: true,
+      data: resources
+    });
   } catch (error) {
-    console.error('Geospatial query error:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
-//helper function to calculate distance between two points
-//worked when i tried, need testing
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; 
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // distance km
-}
-
-function toRad(degrees) {
-  return degrees * (Math.PI/180);
-}
-
 export const getResourceById = async (req, res) => {
   try {
-    const resource = await Resource.findById(req.params.id);
-    if (!resource) return res.status(404).json({ message: 'Resource not found' });
-    res.status(200).json(resource);
+    const resource = await Resource.findById(req.params.id)
+      .populate('added_by', 'name email');
+
+    if (!resource) {
+      return res.status(404).json({ message: 'Resource not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: resource
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -158,12 +224,22 @@ export const getResourceById = async (req, res) => {
 
 export const updateResource = async (req, res) => {
   try {
+    const originalResource = await Resource.findById(req.params.id);
+    if (!originalResource) {
+      return res.status(404).json({ message: 'Resource not found' });
+    }
+
+    // Check if user is authorized to update
+    if (req.user.type !== 'admin' && originalResource.added_by.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to update this resource' });
+    }
+
     const updatedResource = await Resource.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
+      req.params.id,
+      req.body,
       { new: true, runValidators: true }
-    );
-    
+    ).populate('added_by', 'name email');
+
     await createSystemLog(
       req.user.id,
       'UPDATE_RESOURCE',
@@ -175,9 +251,11 @@ export const updateResource = async (req, res) => {
         message: `Resource ${updatedResource.name} was updated`
       }
     );
-    
-    if (!updatedResource) return res.status(404).json({ message: 'Resource not found' });
-    res.status(200).json(updatedResource);
+
+    res.status(200).json({
+      success: true,
+      data: updatedResource
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -185,19 +263,33 @@ export const updateResource = async (req, res) => {
 
 export const deleteResource = async (req, res) => {
   try {
-    const deletedResource = await Resource.findByIdAndDelete(req.params.id);
-    if (!deletedResource) return res.status(404).json({ message: 'Resource not found' });
+    const resource = await Resource.findById(req.params.id);
+    if (!resource) {
+      return res.status(404).json({ message: 'Resource not found' });
+    }
+
+    // Check if user is authorized to delete
+    if (req.user.type !== 'admin' && resource.added_by.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to delete this resource' });
+    }
+
+    await Resource.findByIdAndDelete(req.params.id);
+
     await createSystemLog(
       req.user.id,
       'DELETE_RESOURCE',
       'resource',
-      deletedResource._id,
+      resource._id,
       {
-        previous_state: deletedResource.toObject(),
-        message: `Resource ${deletedResource.name} was deleted`
+        previous_state: resource.toObject(),
+        message: `Resource ${resource.name} was deleted`
       }
     );
-    res.status(200).json({ message: 'Resource deleted successfully' });
+
+    res.status(200).json({
+      success: true,
+      message: 'Resource deleted successfully'
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
