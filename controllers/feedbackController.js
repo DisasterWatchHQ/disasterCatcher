@@ -3,6 +3,10 @@ import { createSystemLog } from './adminLogsController.js';
 
 export const createFeedback = async (req, res) => {
   try {
+    if (req.user.type === 'admin') {
+         return res.status(403).json({ message: 'Admins cannot create feedback' });
+       }
+    
     const newFeedback = await Feedback.create({
       user_id: req.user.id, // Get user ID from authenticated request
       feedback_type: req.body.feedback_type,
@@ -41,27 +45,13 @@ export const getFeedbacks = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    // If regular user, only show their feedback
-    if (req.user.role !== 'admin') {
-      query.user_id = req.user.id;
-    }
-
-    // Pagination
-    const skip = (page - 1) * limit;
-
     const feedbacks = await Feedback.find(query)
       .populate('user_id', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
-      .skip(skip);
-
-    const total = await Feedback.countDocuments(query);
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       feedbacks,
-      currentPage: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
-      totalFeedbacks: total
+      success: true
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -90,46 +80,36 @@ export const getFeedbackById = async (req, res) => {
 
 export const updateFeedback = async (req, res) => {
   try {
-    // Only admins can update feedback status and add responses
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Only admins can update feedback' });
+    // Get the feedback first to check if it exists
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ message: 'Feedback not found' });
     }
 
-    const originalFeedback = await Feedback.findById(req.params.id);
-    if (!originalFeedback) {
-      return res.status(404).json({ message: 'Feedback not found' });
+    // Check if user is admin (using your existing middleware structure)
+    if (!req.user || req.user.type !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can update feedback' });
     }
 
     const updatedFeedback = await Feedback.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
-        admin_response: req.body.admin_response
-          ? {
-              message: req.body.admin_response,
-              responded_by: req.user.id,
-              responded_at: new Date()
-            }
-          : undefined
+        admin_response: {
+          message: req.body.admin_response,
+          responded_by: req.user.id,
+          responded_at: new Date()
+        }
       },
-      { new: true, runValidators: true }
-    ).populate('user_id', 'name email');
-
-    // Log admin's response/update
-    await createSystemLog(
-      req.user.id,
-      'UPDATE_FEEDBACK',
-      'feedback',
-      updatedFeedback._id,
-      {
-        previous_state: originalFeedback.toObject(),
-        new_state: updatedFeedback.toObject(),
-        message: `Feedback from ${updatedFeedback.user_id.name} was updated`
+      { 
+        new: true, 
+        runValidators: true 
       }
-    );
+    ).populate('user_id', 'name email');
 
     res.status(200).json(updatedFeedback);
   } catch (error) {
+    console.error('Update Feedback Error:', error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -142,11 +122,11 @@ export const deleteFeedback = async (req, res) => {
     }
 
     // Only admin or the feedback owner can delete
-    if (req.user.role !== 'admin' && feedback.user_id.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to delete this feedback' });
-    }
+    if (!req.user || req.user.type !== 'admin') {
+          return res.status(403).json({ message: 'Only admins can delete feedback' });
+        }
 
-    await feedback.remove();
+    await Feedback.findByIdAndDelete(req.params.id);
 
     // Log deletion if done by admin
     if (req.user.role === 'admin') {

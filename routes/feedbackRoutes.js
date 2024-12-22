@@ -15,9 +15,9 @@ router.use(protectRoute);
 
 router.post('/', createFeedback);
 router.get('/my-feedback', getMyFeedback);
-router.get('/:id', getFeedbackById);
-router.delete('/:id', deleteFeedback);
 
+router.delete('/:id', verifyUserType(['admin']), deleteFeedback);
+router.get('/:id', verifyUserType(['admin']), getFeedbackById);
 router.get('/', verifyUserType(['admin']), getFeedbacks);
 router.put('/:id', verifyUserType(['admin']), updateFeedback);
 

@@ -85,24 +85,14 @@ export const getUserReportById = async (req, res) => {
 
 export const updateUserReport = async (req, res) => {
   try {
-    const report = await UserReports.findById(req.params.id);
+    const originalReport = await UserReports.findById(req.params.id);
     
-    if (!report) return res.status(404).json({ message: 'Report not found' });
-    
-    await createSystemLog(
-      req.user.id,
-      'UPDATE_USER_REPORT',
-      'user_report',
-      updatedReport._id,
-      {
-        previous_state: originalReport.toObject(),
-        new_state: updatedReport.toObject(),
-        message: `User report ${updatedReport.title} was updated`
-      }
-    );
+    if (!originalReport) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
     
     // Only allow update if user is the owner or an admin
-    if (report.user_id.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (originalReport.user_id.toString() !== req.user.id && req.user.type !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to update this report' });
     }
 
@@ -111,6 +101,20 @@ export const updateUserReport = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).populate('user_id', 'name email');
+
+    if (req.user.type === 'admin') {
+      await createSystemLog(
+        req.user.id,
+        'UPDATE',
+        'user_report',
+        updatedReport._id,
+        {
+          previous_state: originalReport.toObject(),
+          new_state: updatedReport.toObject(),
+          message: `User report ${updatedReport.title} was updated`
+        }
+      );
+    }
 
     res.status(200).json(updatedReport);
   } catch (error) {
@@ -122,25 +126,29 @@ export const deleteUserReport = async (req, res) => {
   try {
     const report = await UserReports.findById(req.params.id);
     
-    if (!report) return res.status(404).json({ message: 'Report not found' });
-    
-    // Only allow deletion if user is the owner or an admin
-    if (report.user_id.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized to delete this report' });
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found' });
     }
     
-    await createSystemLog(
-      req.user.id,
-      'DELETE_USER_REPORT',
-      'user_report',
-      report._id,
-      {
-        previous_state: report.toObject(),
-        message: `User report ${report.title} was deleted`
-      }
-    );
+    // Only allow deletion if user is the owner or an admin
+    if (report.user_id.toString() !== req.user.id && req.user.type !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this report' });
+    }
 
-    await report.remove();
+    if (req.user.type === 'admin') {
+      await createSystemLog(
+        req.user.id,
+        'DELETE',
+        'user_report',
+        report._id,
+        {
+          previous_state: report.toObject(),
+          message: `User report ${report.title} was deleted`
+        }
+      );
+    }
+
+    await report.deleteOne();
     res.status(200).json({ message: 'Report deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,6 +1,6 @@
 import AdminLog from '../models/adminLogs.js';
 
-export const createSystemLog = async (userId, action, targetType, targetId, details) => {
+export const createSystemLog = async (adminId, action, targetType, targetId, details) => {
   try {
     // Map targetType to match enum values
     const mappedTargetType = {
