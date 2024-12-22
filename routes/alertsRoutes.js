@@ -10,12 +10,12 @@ import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute, verifyUserType(["admin"]));
+router.use(protectRoute);
 
-router.post('/', createAlert);
-router.get('/', getAlerts);
-router.get('/:id', getAlertById);
-router.put('/:id', updateAlert);
-router.delete('/:id', deleteAlert);
+router.post('/', verifyUserType(["admin"]), createAlert);
+router.get('/', verifyUserType(["admin"]), getAlerts);
+router.get('/:id', verifyUserType(["admin"]), getAlertById);
+router.put('/:id', verifyUserType(["admin"]), updateAlert);
+router.delete('/:id', verifyUserType(["admin"]), deleteAlert);
 
 export default router;
