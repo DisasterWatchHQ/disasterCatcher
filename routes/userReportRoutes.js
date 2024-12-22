@@ -12,10 +12,10 @@ const router = express.Router();
 
 router.use(protectRoute);
 
-router.post('/', verifyUserType(['user', 'admin']), createUserReport);
+router.post('/', verifyUserType(['user', 'verified']), createUserReport);
 router.get('/', getUserReports);
 router.get('/:id', getUserReportById);
-router.put('/:id', verifyUserType(['user', 'admin']), updateUserReport);
-router.delete('/:id', verifyUserType(['user', 'admin']), deleteUserReport);
+router.put('/:id', verifyUserType(['user', 'verified']), updateUserReport);
+router.delete('/:id', verifyUserType(['user', 'admin', 'verified']), deleteUserReport);
 
 export default router;
