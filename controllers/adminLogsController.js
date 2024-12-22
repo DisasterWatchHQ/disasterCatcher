@@ -1,6 +1,6 @@
 import AdminLog from '../models/adminLogs.js';
 
-export const createSystemLog = async (adminId, action, targetType, targetId, details) => {
+export const createSystemLog = async (userId, action, targetType, targetId, details) => {
   try {
     const detailsMap = details instanceof Map ? 
       details : 
@@ -12,6 +12,7 @@ export const createSystemLog = async (adminId, action, targetType, targetId, det
       target_type: targetType,
       target_id: targetId,
       details: detailsMap
+
     });
 
     return log;
