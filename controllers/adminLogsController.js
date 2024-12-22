@@ -20,7 +20,7 @@ export const createSystemLog = async (userId, action, targetType, targetId, deta
       action: action,
       target_type: mappedTargetType,
       target_id: targetId,
-      // details: details
+      details: detailsMap
     });
 
     return log;
