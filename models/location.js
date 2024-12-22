@@ -5,7 +5,6 @@ const LocationSchema = new Schema({
   current_location: {
     type: String,
     required: true,
-    unique: true,
     validate: {
       validator: (value) => value.length >= 2 && value.length <= 100,
       message: 'Location name must be between 2 and 100 characters.'
@@ -35,33 +34,24 @@ const LocationSchema = new Schema({
     type: String,
     required: false
   }
-}, { 
-    timestamps: true,
-    collation: { locale: 'en', strength: 2 } // Case-insensitive unique index
-  }
-);
+}, { timestamps: true }); // Automatically manages `createdAt` and `updatedAt`
 
-// compound index for geospatial queries
-LocationSchema.index({ latitude: 1, longitude: 1 });
+// Geospatial index for latitude and longitude
+LocationSchema.index({ latitude: 1, longitude: 1 }, { name: 'geoIndex' });
+LocationSchema.index({ current_location: 1 }, { unique: true }); // Enforce uniqueness for `current_location`
 
-// unique index for current_location
-LocationSchema.index(
-  { current_location: 1 }, 
-  { 
-    unique: true,
-    collation: { locale: 'en', strength: 2 }
-  }
-);
-
+// Reusable transform function
 const transformFunction = (doc, ret) => {
   ret.id = ret._id.toString();
   delete ret._id;
   delete ret.__v;
 };
 
+// Apply transform to JSON and object outputs
 LocationSchema.set('toJSON', { transform: transformFunction });
 LocationSchema.set('toObject', { transform: transformFunction });
 
+// Model creation
 const Location = mongoose.model('Location', LocationSchema);
 
 export default Location;
