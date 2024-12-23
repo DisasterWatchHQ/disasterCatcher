@@ -7,7 +7,7 @@ const locationSchema = new Schema({
     enum: ['point', 'address'] 
   },
   coordinates: {
-    type: [Number], //format -> [longitude, latitude]
+    type: [Number], //[longitude, latitude]
     index: '2dsphere'
   },
   address: {
@@ -19,10 +19,6 @@ const locationSchema = new Schema({
   }
 });
 
-//add index for geospatial queries
-locationSchema.index({ coordinates: '2dsphere' });
-
-//subschema for contact information
 const contactSchema = new Schema({
   phone: { 
     type: String, 
@@ -36,32 +32,67 @@ const contactSchema = new Schema({
   },
   email: { 
     type: String, 
-    required: true, 
     validate: {
       validator: function(v) {
-        return /^\S+@\S+\.\S+$/.test(v);
+        return !v || /^\S+@\S+\.\S+$/.test(v);
       },
       message: props => `${props.value} is not a valid email!`
     }
   }
 });
 
-//main schema resources
 const resourceSchema = new Schema({
   name: { type: String, required: true },
+  category: {
+    type: String,
+    required: true,
+    enum: ['facility', 'emergency_contact', 'guide']
+  },
   type: { 
     type: String, 
     required: true, 
-    enum: ['hospital', 'shelter', 'police station', 'fire station', 'clinic']
+    enum: ['hospital', 'shelter', 'police_station', 'fire_station', 'clinic', 'emergency_number', 'disaster_guide']
   },
-  location: { type: locationSchema, required: true },
-  contact: { type: contactSchema, required: true },
+  description: {
+    type: String,
+    required: function() {
+      return this.category === 'guide';
+    }
+  },
+  location: {
+    type: locationSchema,
+    required: function() {
+      return this.category === 'facility';
+    }
+  },
+  contact: {
+    type: contactSchema,
+    required: true
+  },
   availability_status: {
     type: String,
-    required: true,
-    enum: ['open', 'closed', 'under maintenance']
+    required: function() {
+      return this.category === 'facility';
+    },
+    enum: ['open', 'closed', 'under_maintenance']
+  },
+  content: {
+    type: String,
+    required: function() {
+      return this.category === 'guide';
+    }
+  },
+  added_by: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true 
+});
+
+resourceSchema.index({ 'location.coordinates': '2dsphere' });
+resourceSchema.index({ category: 1, type: 1 });
 
 resourceSchema.set('toJSON', {
   transform: (doc, ret) => {
