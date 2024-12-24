@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { MongoClient, ServerApiVersion } from "mongodb";
-import dotenv from "dotenv";  
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
 export const connectMongoose = async () => {
   try {
@@ -15,17 +15,17 @@ export const connectMongoose = async () => {
     console.log(`MongoDB Connected: ${connection.connection.host}`);
 
     // Error handling
-    mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+    mongoose.connection.on("error", (err) => {
+      console.error("MongoDB connection error:", err);
     });
 
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+    mongoose.connection.on("disconnected", () => {
+      console.log("MongoDB disconnected");
     });
 
     return connection;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error("MongoDB connection error:", error);
     process.exit(1);
   }
 };
@@ -33,7 +33,7 @@ export const connectMongoose = async () => {
 // For native mongodb client
 // export const getMongoClient = async () => {
 //   const uri = process.env.MONGODB_URI;
-  
+
 //   const client = new MongoClient(uri, {
 //     useNewUrlParser: true,
 //     useUnifiedTopology: true,
@@ -43,7 +43,7 @@ export const connectMongoose = async () => {
 //       deprecationErrors: true,
 //     }
 //   });
-  
+
 //   try {
 //     await client.connect();
 //     console.log("Successfully connected to MongoDB!");

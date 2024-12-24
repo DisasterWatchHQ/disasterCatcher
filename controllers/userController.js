@@ -1,4 +1,4 @@
-import User from '../models/users.js';
+import User from "../models/users.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
@@ -11,7 +11,7 @@ export const createUser = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Name, email, and password are required."
+        message: "Name, email, and password are required.",
       });
     }
 
@@ -19,7 +19,7 @@ export const createUser = async (req, res) => {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email already registered."
+        message: "Email already registered.",
       });
     }
 
@@ -27,20 +27,19 @@ export const createUser = async (req, res) => {
       name,
       email: email.toLowerCase(),
       password,
-      type: type || "anonymous"
+      type: type || "anonymous",
     });
 
     res.status(201).json({
       success: true,
       message: "User created successfully.",
-      user
+      user,
     });
-
   } catch (error) {
-    console.error('Create User Error:', error);
+    console.error("Create User Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Error creating user."
+      message: error.message || "Error creating user.",
     });
   }
 };
@@ -54,12 +53,12 @@ export const getAllUsers = async (req, res) => {
 
     const query = {};
     if (type) query.type = type;
-    if (email) query.email = new RegExp(email, 'i');
+    if (email) query.email = new RegExp(email, "i");
 
     const users = await User.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .select('-password');
+      .select("-password");
 
     const total = await User.countDocuments(query);
 
@@ -70,13 +69,13 @@ export const getAllUsers = async (req, res) => {
         current: page,
         total: Math.ceil(total / limit),
         count: users.length,
-        totalRecords: total
-      }
+        totalRecords: total,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || "Error retrieving users."
+      message: error.message || "Error retrieving users.",
     });
   }
 };
@@ -88,26 +87,26 @@ export const getUserById = async (req, res) => {
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID format."
+        message: "Invalid user ID format.",
       });
     }
 
-    const user = await User.findById(id).select('-password');
+    const user = await User.findById(id).select("-password");
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || "Error retrieving user."
+      message: error.message || "Error retrieving user.",
     });
   }
 };
@@ -121,7 +120,7 @@ export const updateUser = async (req, res) => {
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID format."
+        message: "Invalid user ID format.",
       });
     }
 
@@ -131,25 +130,25 @@ export const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       { $set: updates },
-      { new: true, runValidators: true }
-    ).select('-password');
+      { new: true, runValidators: true },
+    ).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
     res.status(200).json({
       success: true,
       message: "User updated successfully.",
-      user
+      user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || "Error updating user."
+      message: error.message || "Error updating user.",
     });
   }
 };
@@ -167,7 +166,9 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error deleting user.", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting user.", error: error.message });
   }
 };
 
@@ -179,7 +180,7 @@ export const authenticateUser = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required."
+        message: "Email and password are required.",
       });
     }
 
@@ -187,7 +188,7 @@ export const authenticateUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials."
+        message: "Invalid credentials.",
       });
     }
 
@@ -195,7 +196,7 @@ export const authenticateUser = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials."
+        message: "Invalid credentials.",
       });
     }
 
@@ -206,7 +207,7 @@ export const authenticateUser = async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, type: user.type },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     res.cookie("token", token, {
@@ -224,14 +225,14 @@ export const authenticateUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        type: user.type
-      }
+        type: user.type,
+      },
     });
   } catch (error) {
     console.error("Authentication Error:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Authentication error."
+      message: error.message || "Authentication error.",
     });
   }
 };
@@ -245,14 +246,14 @@ export const changePassword = async (req, res) => {
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID format."
+        message: "Invalid user ID format.",
       });
     }
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Current password and new password are required."
+        message: "Current password and new password are required.",
       });
     }
 
@@ -260,7 +261,7 @@ export const changePassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found.",
       });
     }
 
@@ -268,7 +269,7 @@ export const changePassword = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Current password is incorrect."
+        message: "Current password is incorrect.",
       });
     }
 
@@ -277,12 +278,12 @@ export const changePassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Password changed successfully."
+      message: "Password changed successfully.",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || "Error changing password."
+      message: error.message || "Error changing password.",
     });
   }
 };
