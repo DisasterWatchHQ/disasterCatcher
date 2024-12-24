@@ -1,7 +1,6 @@
 import express from 'express';
 import { 
   createResource,
-  getResources,
   getFacilities,
   getGuides,
   getEmergencyContacts,
@@ -10,11 +9,11 @@ import {
   updateResource,
   deleteResource
 } from '../controllers/resourceController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyUserType, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 // Public routes
 router.get('/facilities', getFacilities);

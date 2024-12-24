@@ -7,11 +7,11 @@ import {
   deleteFeedback,
   getMyFeedback 
 } from '../controllers/feedbackController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyUserType, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 router.post('/', createFeedback);
 router.get('/my-feedback', getMyFeedback);

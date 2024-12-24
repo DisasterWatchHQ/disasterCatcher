@@ -8,18 +8,18 @@ import {
   authenticateUser,
   changePassword 
 } from '../controllers/userController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyUserType, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/login', authenticateUser);
 
 router.post('/register', createUser);
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 router.get('/', verifyUserType('admin'), getAllUsers);
 router.get('/:id', getUserById);
-router.put('/:id', verifyUserType('admin'), updateUser);
+router.put('/:id', updateUser);
 router.delete('/:id', verifyUserType('admin'), deleteUser);
 
 export default router;

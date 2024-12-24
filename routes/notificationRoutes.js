@@ -6,12 +6,12 @@ import {
   markAllAsRead,
   deleteNotification 
 } from '../controllers/notificationController.js';
-import { protectRoute } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Apply protection middleware
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 // Routes
 router.get('/my-notifications', getMyNotifications);

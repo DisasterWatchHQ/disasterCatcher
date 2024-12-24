@@ -5,11 +5,11 @@ import {
   updateMySubscription,
   deleteMySubscription
 } from '../controllers/subscriptionController.js';
-import { protectRoute } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 router.post('/', createSubscription);
 router.get('/my-subscription', getMySubscription);

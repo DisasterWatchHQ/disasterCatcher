@@ -7,11 +7,11 @@ import {
   updateIncidentReport, 
   deleteIncidentReport 
 } from '../controllers/incidentReportsController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyUserType, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 router.post('/', verifyUserType(['admin', 'verified']), createIncidentReport);
 router.put('/:id', verifyUserType(['admin', 'verified']), updateIncidentReport);

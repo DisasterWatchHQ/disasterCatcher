@@ -6,11 +6,11 @@ import {
   updateUserReport, 
   deleteUserReport 
 } from '../controllers/userReportController.js';
-import { protectRoute, verifyUserType } from '../middlewares/authMiddleware.js';
+import { protectRoute, verifyUserType, verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protectRoute);
+router.use(protectRoute, verifyToken);
 
 router.post('/', verifyUserType(['user', 'verified']), createUserReport);
 router.get('/', getUserReports);
