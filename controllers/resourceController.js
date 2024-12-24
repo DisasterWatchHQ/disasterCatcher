@@ -60,12 +60,12 @@ export const createResource = async (req, res) => {
 
     await createSystemLog(
       req.user.id,
-      'CREATE_RESOURCE',
+      'CREATE_RESOURCE',  // Instead of 'CREATE'
       'resource',
-      savedResource._id,
+      resource._id,
       {
-        new_state: savedResource.toObject(),
-        message: `New ${category} resource ${name} was created`
+        new_state: resource.toObject(),
+        message: `New resource ${resource.name} was created`
       }
     );
 
