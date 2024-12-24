@@ -8,9 +8,19 @@ export const protectRoute = async (req, res, next) => {
     let user = null;
 
     if (token) {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-      user = await User.findById(decodedToken.userId);
-      if (!user) throw new Error("Invalid token or user not found");
+      try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        user = await User.findById(decodedToken.userId);
+        if (!user) throw new Error("Invalid token or user not found");
+      } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+          return res.status(401).json({ success: false, message: "Token expired, please log in again." });
+        } else if (error.name === 'JsonWebTokenError') {
+          return res.status(401).json({ success: false, message: "Invalid token format." });
+        } else {
+          return res.status(401).json({ success: false, message: "Error verifying token." });
+        }
+      }
     } else {
       // Handle anonymous users
       if (!req.session.pseudoUser) {
@@ -90,5 +100,23 @@ export const verifyAdmin = async (req, res, next) => {
       success: false,
       message: "Error verifying admin status.",
     });
+  }
+};
+
+export const verifyToken = (req, res, next) => {
+  console.log("Cookies:", req.cookies);
+  console.log("Headers:", req.headers);
+
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Access Denied. No Token Provided." });
+  }
+
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Invalid Token." });
   }
 };
