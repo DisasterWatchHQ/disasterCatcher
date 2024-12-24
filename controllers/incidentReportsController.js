@@ -3,6 +3,13 @@ import { createSystemLog } from './adminLogsController.js';
 
 export const createIncidentReport = async (req, res) => {
   try {
+    // Check authorization
+    if (req.user.type !== 'admin' && req.user.type !== 'verified') {
+      return res.status(403).json({ 
+        message: 'Only admin and verified users can create incident reports' 
+      });
+    }
+
     const {
       title,
       disaster_category,
@@ -14,33 +21,46 @@ export const createIncidentReport = async (req, res) => {
       images
     } = req.body;
 
+    // Create the report
     const newReport = await IncidentReports.create({
       title,
       disaster_category,
       description,
-      location,
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: {
+          city: location.address.city,
+          district: location.address.district,
+          province: location.address.province,
+          details: location.address.details
+        }
+      },
       date_time,
-      user_id: req.user.id, // Get from authenticated user
+      user_id: req.user.id,
       severity,
       response_status,
       images,
       verified_by: [req.user.id] // Initial verification by creator
     });
-    
+
+    // Create system log
     await createSystemLog(
       req.user.id,
       'CREATE_INCIDENT_REPORT',
       'incident_report',
-      newReport._id,
+      newReport._id, // Changed from report._id to newReport._id
       {
         new_state: newReport.toObject(),
         message: `New incident report ${newReport.title} was created`
       }
     );
-    
+
+    // Populate and return the response
     const populatedReport = await newReport.populate('user_id', 'name email');
     res.status(201).json(populatedReport);
   } catch (error) {
+    console.log('Create Incident Report Error:', error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -169,7 +189,7 @@ export const updateIncidentReport = async (req, res) => {
     if (typeof createSystemLog === 'function') {
       await createSystemLog(
         req.user.id,
-        'UPDATE',
+        'UPDATE_INCIDENT_REPORT',
         'incident_report',
         updatedReport._id,
         {
