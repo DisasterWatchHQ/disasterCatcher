@@ -105,7 +105,7 @@ export const updateUserReport = async (req, res) => {
     if (req.user.type === 'admin') {
       await createSystemLog(
         req.user.id,
-        'UPDATE',
+        'UPDATE_USER_REPORT',
         'user_report',
         updatedReport._id,
         {
@@ -138,7 +138,7 @@ export const deleteUserReport = async (req, res) => {
     if (req.user.type === 'admin') {
       await createSystemLog(
         req.user.id,
-        'DELETE',
+        'DELETE_USER_REPORT',
         'user_report',
         report._id,
         {
