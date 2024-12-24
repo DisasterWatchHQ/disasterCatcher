@@ -2,14 +2,27 @@ import AdminLog from '../models/adminLogs.js';
 
 export const createSystemLog = async (adminId, action, targetType, targetId, details) => {
   try {
-    const detailsMap = details instanceof Map ? 
-      details : 
-      new Map(Object.entries(details));
+    // Map targetType to match enum values
+    const mappedTargetType = {
+      'user_report': 'user_report',
+      'incident_report': 'incident_report',
+      'resource': 'resource',
+      'user': 'user',
+      'feedback': 'feedback'
+    }[targetType];
+
+    if (!mappedTargetType) {
+      console.log(`Invalid target type: ${targetType}`);
+      return null;
+    }
+
+    // Convert details to Map if it's not already
+    const detailsMap = details instanceof Map ? details : new Map(Object.entries(details || {}));
 
     const log = await AdminLog.create({
       admin_id: adminId,
-      action,
-      target_type: targetType,
+      action: action,
+      target_type: mappedTargetType,
       target_id: targetId,
       details: detailsMap
     });
