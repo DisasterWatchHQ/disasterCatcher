@@ -1,31 +1,48 @@
 import mongoose, { Schema } from 'mongoose';
 
-// Define the schema for Notifications collection
 const notificationSchema = new Schema({
   user_id: { 
     type: Schema.Types.ObjectId, 
-    ref: 'User', // Reference to `users` collection
+    ref: 'User',
     required: true 
   },
   message: { 
     type: String, 
     required: true, 
-    minlength: [1, 'Message cannot be empty'] // Ensure that message is not empty
+    minlength: [1, 'Message cannot be empty']
   },
   type: { 
     type: String, 
     required: true, 
-    enum: ['alert', 'update', 'report validation'], // Define notification types
+    enum: ['alert', 'warning', 'system_update', 'report_validation']
   },
   status: { 
     type: String, 
     required: true, 
-    enum: ['unread', 'read'], // Define status types
-    default: 'unread' // Default status is "unread"
+    enum: ['unread', 'read'],
+    default: 'unread'
+  },
+  priority: {
+    type: String,
+    required: true,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
+  },
+  source: {
+    type: String,
+    required: true,
+    enum: ['system', 'alert_system', 'report_system'],
+    default: 'system'
+  },
+  metadata: {
+    type: Map,
+    of: Schema.Types.Mixed,
+    default: new Map()
   }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+}, { 
+  timestamps: true 
+});
 
-// Transform function for cleaner output
 notificationSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
@@ -34,6 +51,5 @@ notificationSchema.set('toJSON', {
   }
 });
 
-// Model creation
 const Notification = mongoose.model('Notification', notificationSchema);
 export default Notification;
