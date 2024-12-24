@@ -2,15 +2,12 @@ import User from '../models/users.js';
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
-// Helper function to check MongoDB ObjectID validity
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-// Create User
 export const createUser = async (req, res) => {
   try {
     const { name, email, password, type } = req.body;
 
-    // Basic validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -18,7 +15,6 @@ export const createUser = async (req, res) => {
       });
     }
 
-    // Check existing user
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({
@@ -27,7 +23,6 @@ export const createUser = async (req, res) => {
       });
     }
 
-    // Create new user
     const user = await User.create({
       name,
       email: email.toLowerCase(),
@@ -86,7 +81,6 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Get User by ID
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -215,6 +209,13 @@ export const authenticateUser = async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "dev",
+      sameSite: process.env.NODE_ENV === "dev" ? "lax" : "none",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.status(200).json({
       success: true,
       message: "Login successful.",
@@ -227,6 +228,7 @@ export const authenticateUser = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Authentication Error:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Authentication error."
