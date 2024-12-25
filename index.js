@@ -11,7 +11,7 @@ import DevScheduler from "./utils/devScheduler.js";
 
 dotenv.config();
 
-// connectMongoose();
+connectMongoose();
 
 const PORT = process.env.PORT || 5000;
 
