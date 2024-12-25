@@ -56,5 +56,7 @@ adminLogSchema.index({ action: 1 });
 adminLogSchema.index({ createdAt: -1 });
 adminLogSchema.index({ target_type: 1, target_id: 1 });
 
+
 const AdminLog = mongoose.model("AdminLog", adminLogSchema);
 export default AdminLog;
+
