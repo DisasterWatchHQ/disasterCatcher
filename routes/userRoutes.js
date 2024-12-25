@@ -24,6 +24,7 @@ router.use(protectRoute, verifyToken);
 router.get("/", verifyUserType("admin"), getAllUsers);
 router.get("/:id", getUserById);
 router.put("/:id", updateUser);
-router.delete("/:id", verifyUserType("admin"), deleteUser);
+router.delete("/:id", deleteUser);
+router.put("/change-password/:id", changePassword);
 
 export default router;
