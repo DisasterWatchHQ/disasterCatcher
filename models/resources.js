@@ -1,64 +1,117 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema } from "mongoose";
 
-// Subschema for location
 const locationSchema = new Schema({
-  latitude: { type: Number, required: true, min: -90, max: 90 },
-  longitude: { type: Number, required: true, min: -180, max: 180 }
-});
-
-// Subschema for contact information
-const contactSchema = new Schema({
-  phone: { 
-    type: String, 
-    required: true, 
-    validate: {
-      validator: function(v) {
-        return /^[\d+\s()-]+$/.test(v); // Basic phone number format validation
-      },
-      message: props => `${props.value} is not a valid phone number!`
-    }
-  },
-  email: { 
-    type: String, 
-    required: true, 
-    validate: {
-      validator: function(v) {
-        return /^\S+@\S+\.\S+$/.test(v); // Email format validation
-      },
-      message: props => `${props.value} is not a valid email!`
-    }
-  }
-});
-
-// Main schema for resources
-const resourceSchema = new Schema({
-  name: { type: String, required: true },
-  type: { 
-    type: String, 
-    required: true, 
-    enum: ['hospital', 'shelter', 'police station', 'fire station', 'clinic'], // Define types of resources
-  },
-  location: { type: locationSchema, required: true }, // Use location subschema
-  contact: { type: contactSchema, required: true },  // Use contact subschema
-  availability_status: {
+  type: {
     type: String,
     required: true,
-    enum: ['open', 'closed', 'under maintenance'], // Define availability status options
-  }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+    enum: ["point", "address"],
+  },
+  coordinates: {
+    type: [Number], //[longitude, latitude]
+    index: "2dsphere",
+  },
+  address: {
+    formatted_address: String,
+    city: String,
+    district: String,
+    province: String,
+    details: String,
+  },
+});
 
-// Optional: Geospatial index for location if you plan to use proximity-based queries
-resourceSchema.index({ location: '2dsphere' }); // Enables geospatial queries
+const contactSchema = new Schema({
+  phone: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return /^[\d+\s()-]+$/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid phone number!`,
+    },
+  },
+  email: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        return !v || /^\S+@\S+\.\S+$/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid email!`,
+    },
+  },
+});
 
-// Transform function for cleaner API output
-resourceSchema.set('toJSON', {
+const resourceSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    category: {
+      type: String,
+      required: true,
+      enum: ["facility", "emergency_contact", "guide"],
+    },
+    type: {
+      type: String,
+      required: true,
+      enum: [
+        "hospital",
+        "shelter",
+        "police_station",
+        "fire_station",
+        "clinic",
+        "emergency_number",
+        "disaster_guide",
+      ],
+    },
+    description: {
+      type: String,
+      required: function () {
+        return this.category === "guide";
+      },
+    },
+    location: {
+      type: locationSchema,
+      required: function () {
+        return this.category === "facility";
+      },
+    },
+    contact: {
+      type: contactSchema,
+      required: true,
+    },
+    availability_status: {
+      type: String,
+      required: function () {
+        return this.category === "facility";
+      },
+      enum: ["open", "closed", "under_maintenance"],
+    },
+    content: {
+      type: String,
+      required: function () {
+        return this.category === "guide";
+      },
+    },
+    added_by: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+resourceSchema.index({ "location.coordinates": "2dsphere" });
+resourceSchema.index({ category: 1, type: 1 });
+
+resourceSchema.set("toJSON", {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.__v;
-  }
+  },
 });
 
-// Model creation
-const Resource = mongoose.model('Resource', resourceSchema);
+const Resource = mongoose.model("Resource", resourceSchema);
 export default Resource;

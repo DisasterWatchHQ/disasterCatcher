@@ -1,24 +1,19 @@
-import express from 'express';
-import { 
-  createAdminLog, 
-  getAdminLogs, 
-  getAdminLogById, 
-  updateAdminLog, 
-  deleteAdminLog
-} from '../controllers/adminLogsController.js';
+import express from "express";
+import {
+  getAdminLogs,
+  getAdminLogById,
+} from "../controllers/adminLogsController.js";
 import {
   protectRoute,
-  verifyUserType
-} from '../middlewares/authMiddleware.js';
+  verifyUserType,
+  verifyToken,
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(protectRoute, verifyUserType(["admin"]))
+router.use(protectRoute, verifyToken, verifyUserType(["admin", "verified"]));
 
-router.post('/', createAdminLog);
-router.get('/', getAdminLogs);
-router.get('/:id', getAdminLogById);
-router.put('/:id', updateAdminLog);
-router.delete('/:id', deleteAdminLog);
+router.get("/", getAdminLogs);
+router.get("/:id", getAdminLogById);
 
 export default router;
