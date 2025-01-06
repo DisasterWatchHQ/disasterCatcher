@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.use("/adminlogs", adminLogsRoutes);
 router.use("/user", userRoutes);
-router.use("/resource", resourceRoutes);
+router.use("/resources", resourceRoutes);
 router.use("/userReport", userReportRoutes);
 router.use("/incidentReport", incidentReportsRoutes);
 router.use("/feedback", feedbackRoutes);
