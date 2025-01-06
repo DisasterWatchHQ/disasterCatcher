@@ -23,7 +23,6 @@ const userReportSchema = new Schema(
     description: { type: String, required: true },
     location: { type: locationSchema, required: true },
     date_time: { type: Date, default: Date.now },
-    user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
     images: {
       type: [String],
       validate: {
