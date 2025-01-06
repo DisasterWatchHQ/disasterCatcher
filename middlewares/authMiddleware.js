@@ -52,9 +52,7 @@ export const protectRoute = async (req, res, next) => {
 
 export const verifyVerifiedUser = async (req, res, next) => {
   try {
-    // Check if user exists and is verified
-    if (!req.user || !req.user.verification_status) {
-      // Changed from isVerified to verification_status
+    if (!req.user || !req.user.isVerified) {
       return res.status(403).json({
         success: false,
         message: "Access denied. This action requires a verified user.",
@@ -62,7 +60,6 @@ export const verifyVerifiedUser = async (req, res, next) => {
     }
     next();
   } catch (error) {
-    console.error("Verified User Check Error:", error);
     return res.status(500).json({
       success: false,
       message: "Error checking user verification status.",
