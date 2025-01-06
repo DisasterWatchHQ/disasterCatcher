@@ -8,22 +8,20 @@ import {
   authenticateUser,
   changePassword,
 } from "../controllers/userController.js";
-import {
-  protectRoute,
-  verifyUserType,
-  verifyToken,
-} from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/login", authenticateUser);
-
 router.post("/register", createUser);
+
+// All routes below this middleware require authentication
 router.use(protectRoute, verifyToken);
 
-router.get("/", verifyUserType("admin"), getAllUsers);
+router.get("/", getAllUsers);
 router.get("/:id", getUserById);
 router.put("/:id", updateUser);
-router.delete("/:id", verifyUserType("admin"), deleteUser);
+router.delete("/:id", deleteUser);
+router.post("/:id/change-password", changePassword);
 
 export default router;
