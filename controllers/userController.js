@@ -6,20 +6,28 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, type } = req.body;
+    const { name, email, password, workId, associated_department } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !workId || !associated_department) {
       return res.status(400).json({
         success: false,
-        message: "Name, email, and password are required.",
+        message: "Name, email, password, work ID, and department are required.",
       });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ 
+      $or: [
+        { email: email.toLowerCase() },
+        { workId: workId }
+      ]
+    });
+    
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email already registered.",
+        message: existingUser.email === email.toLowerCase() 
+          ? "Email already registered." 
+          : "Work ID already registered.",
       });
     }
 
@@ -27,12 +35,14 @@ export const createUser = async (req, res) => {
       name,
       email: email.toLowerCase(),
       password,
-      type: type || "anonymous",
+      workId,
+      associated_department,
+      isVerified: false, // Default to unverified
     });
 
     res.status(201).json({
       success: true,
-      message: "User created successfully.",
+      message: "User created successfully. Awaiting verification.",
       user,
     });
   } catch (error) {
@@ -44,16 +54,16 @@ export const createUser = async (req, res) => {
   }
 };
 
-// Get All Users with Pagination
 export const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const { type, email } = req.query;
+    const { department, email, isVerified } = req.query;
 
     const query = {};
-    if (type) query.type = type;
+    if (department) query.associated_department = department;
     if (email) query.email = new RegExp(email, "i");
+    if (isVerified !== undefined) query.isVerified = isVerified === 'true';
 
     const users = await User.find(query)
       .skip((page - 1) * limit)
@@ -172,7 +182,6 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Authentication
 export const authenticateUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -192,6 +201,13 @@ export const authenticateUser = async (req, res) => {
       });
     }
 
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: "Account not verified. Please wait for verification.",
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -205,7 +221,7 @@ export const authenticateUser = async (req, res) => {
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id, type: user.type },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "24h" },
     );
@@ -225,7 +241,8 @@ export const authenticateUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        type: user.type,
+        department: user.associated_department,
+        isVerified: user.isVerified
       },
     });
   } catch (error) {
