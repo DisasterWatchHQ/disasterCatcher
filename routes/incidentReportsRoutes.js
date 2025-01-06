@@ -9,7 +9,7 @@ import {
 } from "../controllers/incidentReportsController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 
@@ -17,11 +17,11 @@ const router = express.Router();
 
 router.use(protectRoute, verifyToken);
 
-router.post("/", verifyUserType(["admin", "verified"]), createIncidentReport);
-router.put("/:id", verifyUserType(["admin", "verified"]), updateIncidentReport);
+router.post("/", verifyVerifiedUser, createIncidentReport);
+router.put("/:id", verifyVerifiedUser, updateIncidentReport);
 router.delete(
   "/:id",
-  verifyUserType(["admin", "verified"]),
+  verifyVerifiedUser,
   deleteIncidentReport,
 );
 

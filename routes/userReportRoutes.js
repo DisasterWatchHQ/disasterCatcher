@@ -8,22 +8,19 @@ import {
 } from "../controllers/userReportController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+router.post("/", createUserReport);
+
 router.use(protectRoute, verifyToken);
 
-router.post("/", verifyUserType(["user", "verified"]), createUserReport);
 router.get("/", getUserReports);
 router.get("/:id", getUserReportById);
-router.put("/:id", verifyUserType(["user", "verified"]), updateUserReport);
-router.delete(
-  "/:id",
-  verifyUserType(["user", "admin", "verified"]),
-  deleteUserReport,
-);
+router.put("/:id", verifyVerifiedUser, updateUserReport);
+router.delete("/:id", verifyVerifiedUser, deleteUserReport);
 
 export default router;

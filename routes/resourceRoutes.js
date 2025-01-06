@@ -11,15 +11,14 @@ import {
 } from "../controllers/resourceController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
+import Resource from "../models/resources.js";
 
 const router = express.Router();
 
-router.use(protectRoute, verifyToken);
-
-// Public routes
+// Public routes (no authentication required)
 router.get("/facilities", getFacilities);
 router.get("/guides", getGuides);
 router.get("/emergency-contacts", getEmergencyContacts);
@@ -27,8 +26,39 @@ router.get("/facilities/nearby", getNearbyFacilities);
 router.get("/:id", getResourceById);
 
 // Protected routes
-router.post("/", verifyUserType(["admin", "verified"]), createResource);
-router.put("/:id", verifyUserType(["admin", "verified"]), updateResource);
-router.delete("/:id", verifyUserType(["admin", "verified"]), deleteResource);
+router.use(protectRoute, verifyToken);
 
+router.post("/", verifyVerifiedUser, createResource);
+router.put("/:id", verifyVerifiedUser, updateResource);
+router.delete("/:id", verifyVerifiedUser, deleteResource);
+
+// Additional routes for advanced features
+router.get("/verified/last-month", verifyVerifiedUser, async (req, res) => {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+  const resources = await Resource.find({
+    last_verified: { $gte: oneMonthAgo }
+  }).populate("added_by", "name email");
+  
+  res.json({ success: true, data: resources });
+});
+
+router.get("/", verifyVerifiedUser, async (req, res) => {
+  try {
+    const resources = await Resource.find()
+      .populate("added_by", "name email")
+      .sort({ updatedAt: -1 });
+    
+    res.json({
+      success: true,
+      resources
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 export default router;
