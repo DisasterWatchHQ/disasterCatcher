@@ -67,26 +67,6 @@ export const verifyVerifiedUser = async (req, res, next) => {
   }
 };
 
-// Middleware for admin users
-export const verifyAdmin = async (req, res, next) => {
-  try {
-    // Check if user exists and is admin
-    if (!req.user || req.user.type !== "admin") {
-      // Changed from userType to type
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Admin privileges required.",
-      });
-    }
-    next();
-  } catch (error) {
-    console.error("Admin Verification Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error verifying admin status.",
-    });
-  }
-};
 
 export const verifyToken = (req, res, next) => {
   console.log("Cookies:", req.cookies);
@@ -102,6 +82,7 @@ export const verifyToken = (req, res, next) => {
   try {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
+    
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid Token." });
