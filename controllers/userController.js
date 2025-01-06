@@ -121,7 +121,6 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Update User
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -254,7 +253,6 @@ export const authenticateUser = async (req, res) => {
   }
 };
 
-// Change Password
 export const changePassword = async (req, res) => {
   try {
     const { id } = req.params;
