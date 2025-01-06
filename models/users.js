@@ -29,14 +29,10 @@ const userSchema = new Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
-    type: {
+    workId: {
       type: String,
-      required: true,
-      enum: {
-        values: ["registered", "verified", "anonymous", "admin"],
-        message: "{VALUE} is not supported",
-      },
-      default: "anonymous",
+      required: [true, "Work ID is required"],
+      unique: true,
     },
     location: locationSchema,
     associated_department: {
@@ -46,7 +42,7 @@ const userSchema = new Schema(
         message: "{VALUE} is not a valid department",
       },
     },
-    verification_status: {
+    isVerified: {
       type: Boolean,
       default: false,
     },
@@ -61,7 +57,6 @@ const userSchema = new Schema(
   },
 );
 
-/// Password hashing middleware
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -74,7 +69,6 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
@@ -83,7 +77,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   }
 };
 
-// JSON transform
 userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   delete userObject.password;
@@ -91,10 +84,11 @@ userSchema.methods.toJSON = function () {
   return userObject;
 };
 
-/// Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ type: 1 });
-userSchema.index({ "location.latitude": 1, "location.longitude": 1 });
+userSchema.index(
+  { "location.latitude": 1, "location.longitude": 1 },
+  { sparse: true },
+);
+userSchema.index({ workId: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 export default User;
