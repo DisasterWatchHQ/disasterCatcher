@@ -22,13 +22,15 @@ jobs:
           fetch-depth: 0
 
       - name: Generate changelog
-        uses: conventional-changelog/conventional-changelog-action@v3
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          preset: 'angular'
-          output-file: 'CHANGELOG.md'
-          release-count: 0
-          version-file: './package.json'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          output: CHANGELOG.md
+          configOptions: |
+            future-release=Unreleased
+            pull-requests=true
+            issues=true
+            base=HISTORY.md
 
       - name: Commit changelog
         run: |
