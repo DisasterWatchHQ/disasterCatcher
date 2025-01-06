@@ -26,11 +26,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           output: CHANGELOG.md
-          configOptions: |
-            future-release=Unreleased
-            pull-requests=true
-            issues=true
-            base=HISTORY.md
+          base: HISTORY.md
+          futureRelease: Unreleased
+          pullRequests: true
+          issues: true
+          unreleased: true
+          unreleasedLabel: Unreleased
+          enhancementLabels: enhancement,feature
+          bugLabels: bug,bugfix
+          breakingLabels: breaking,breaking-change
 
       - name: Commit changelog
         run: |
