@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/HEAD)
+## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-06)
 
-[Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...HEAD)
+[Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...Unreleased)
 
 **Fixed bugs:**
 
