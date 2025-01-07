@@ -57,7 +57,7 @@ const incidentReportSchema = new Schema(
 
 // Indexes
 incidentReportSchema.index({ disaster_category: 1 });
-incidentReportSchema.index({ location: "2dsphere" }); // Geospatial index for location
+// incidentReportSchema.index({ location: "2dsphere" }); // Geospatial index for location
 
 // Transform output to clean up API responses
 incidentReportSchema.set("toJSON", {

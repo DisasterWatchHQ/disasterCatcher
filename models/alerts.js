@@ -36,7 +36,7 @@ const alertSchema = new Schema(
 ); // Automatically adds createdAt and updatedAt
 
 // Optional: Geospatial index if you need to query by location
-alertSchema.index({ location: "2dsphere" }); // Only if you're storing location info
+// alertSchema.index({ location: "2dsphere" }); // Only if you're storing location info
 
 // Optional: Transform function to clean up output (remove _id and __v)
 alertSchema.set("toJSON", {
