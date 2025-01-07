@@ -158,15 +158,21 @@ export const getFacilities = async (req, res) => {
 
 export const getGuides = async (req, res) => {
   try {
-    const { type, limit = 10, page = 1 } = req.query;
+    const { type, tags, limit = 10, page = 1 } = req.query;
 
-    const query = { category: "guide" };
+    const query = {
+      category: "guide",
+      status: "active",
+    };
+
     if (type) query.type = type;
+    if (tags) query.tags = { $in: tags.split(",") };
 
     const skip = (page - 1) * limit;
 
     const resources = await Resource.find(query)
       .populate("added_by", "name email")
+      .sort({ last_verified: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
@@ -186,9 +192,18 @@ export const getGuides = async (req, res) => {
 
 export const getEmergencyContacts = async (req, res) => {
   try {
-    const resources = await Resource.find({
+    const { emergency_level } = req.query;
+
+    const query = {
       category: "emergency_contact",
-    }).populate("added_by", "name email");
+      status: "active",
+    };
+
+    if (emergency_level) query.emergency_level = emergency_level;
+
+    const resources = await Resource.find(query)
+      .populate("added_by", "name email")
+      .sort({ emergency_level: -1 });
 
     res.status(200).json({
       success: true,
@@ -201,37 +216,34 @@ export const getEmergencyContacts = async (req, res) => {
 
 export const getNearbyFacilities = async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 10000, type } = req.query;
+    const { latitude, longitude, maxDistance = 10000, type, availability_status } = req.query;
 
     if (!latitude || !longitude) {
-      return res
-        .status(400)
-        .json({ message: "Latitude and longitude are required" });
+      return res.status(400).json({ message: "Latitude and longitude are required" });
     }
 
     const query = {
-      category: "facility",
-      "location.coordinates": {
-        $nearSphere: {
+      category: 'facility',
+      status: 'active',
+      'location.coordinates': {
+        $near: {
           $geometry: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)]
           },
-          $maxDistance: parseFloat(maxDistance),
-        },
-      },
+          $maxDistance: parseFloat(maxDistance)
+        }
+      }
     };
 
     if (type) query.type = type;
+    if (availability_status) query.availability_status = availability_status;
 
-    const resources = await Resource.find(query).populate(
-      "added_by",
-      "name email",
-    );
+    const resources = await Resource.find(query).populate("added_by", "name email");
 
     res.status(200).json({
       success: true,
-      data: resources,
+      data: resources
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
