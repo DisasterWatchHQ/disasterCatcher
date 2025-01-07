@@ -12,6 +12,11 @@ export const createResource = async (req, res) => {
       contact,
       availability_status,
       content,
+      metadata,
+      tags,
+      operating_hours,
+      capacity,
+      emergency_level,
     } = req.body;
 
     // Create base resource data
@@ -21,6 +26,9 @@ export const createResource = async (req, res) => {
       type,
       contact,
       added_by: req.user.id,
+      status: "active",
+      tags: tags || [],
+      metadata: metadata || {},
     };
 
     // Add category-specific fields
@@ -48,6 +56,10 @@ export const createResource = async (req, res) => {
 
       resourceData.location = locationData;
       resourceData.availability_status = availability_status;
+      resourceData.operating_hours = operating_hours;
+      if (type === "shelter") {
+        resourceData.capacity = capacity;
+      }
     }
 
     if (category === "guide") {
@@ -55,12 +67,15 @@ export const createResource = async (req, res) => {
       resourceData.content = content;
     }
 
+    if (category === "emergency_contact") {
+      resourceData.emergency_level = emergency_level;
+    }
+
     const resource = new Resource(resourceData);
     const savedResource = await resource.save();
-
     await createSystemLog(
       req.user.id,
-      "CREATE_RESOURCE", // Instead of 'CREATE'
+      "CREATE_RESOURCE",
       "resource",
       resource._id,
       {
