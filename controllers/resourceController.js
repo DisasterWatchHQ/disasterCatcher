@@ -278,14 +278,14 @@ export const updateResource = async (req, res) => {
     }
 
     // Check if user is authorized to update
-    if (
-      req.user.type !== "admin" &&
-      originalResource.added_by.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update this resource" });
-    }
+    // if (
+    //   req.user.type !== "admin" &&
+    //   originalResource.added_by.toString() !== req.user.id
+    // ) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Not authorized to update this resource" });
+    // }
 
     const updatedResource = await Resource.findByIdAndUpdate(
       req.params.id,
@@ -322,14 +322,14 @@ export const deleteResource = async (req, res) => {
     }
 
     // Check if user is authorized to delete
-    if (
-      req.user.type !== "admin" &&
-      resource.added_by.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to delete this resource" });
-    }
+    // if (
+    //   req.user.type !== "admin" &&
+    //   resource.added_by.toString() !== req.user.id
+    // ) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Not authorized to delete this resource" });
+    // }
 
     await Resource.findByIdAndDelete(req.params.id);
 
