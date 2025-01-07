@@ -104,14 +104,20 @@ export const getFacilities = async (req, res) => {
       city,
       district,
       province,
+      status,
+      tags,
       limit = 10,
       page = 1,
     } = req.query;
 
-    const query = { category: "facility" };
+    const query = {
+      category: "facility",
+      status: status || "active",
+    };
 
     if (type) query.type = type;
     if (availability_status) query.availability_status = availability_status;
+    if (tags) query.tags = { $in: tags.split(",") };
 
     if (city || district || province) {
       if (city)
@@ -132,6 +138,7 @@ export const getFacilities = async (req, res) => {
 
     const resources = await Resource.find(query)
       .populate("added_by", "name email")
+      .sort({ last_verified: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
