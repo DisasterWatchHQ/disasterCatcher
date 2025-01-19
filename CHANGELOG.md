@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-06)
+## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-19)
 
 [Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...Unreleased)
 
@@ -12,6 +12,7 @@
 
 **Merged pull requests:**
 
+- build\(deps\): bump mongoose from 8.9.3 to 8.9.5 [\#26](https://github.com/DisasterWatchHQ/disasterCatcher/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Test [\#24](https://github.com/DisasterWatchHQ/disasterCatcher/pull/24) ([5yndr0m](https://github.com/5yndr0m))
 - build: package update [\#23](https://github.com/DisasterWatchHQ/disasterCatcher/pull/23) ([5yndr0m](https://github.com/5yndr0m))
 - Development [\#22](https://github.com/DisasterWatchHQ/disasterCatcher/pull/22) ([5yndr0m](https://github.com/5yndr0m))
