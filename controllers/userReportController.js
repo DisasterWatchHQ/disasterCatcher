@@ -6,20 +6,23 @@ import { createSystemLog } from "./adminLogsController.js";
 export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
-    const user = req.user;
 
-    if (!title || !disaster_category || !description || !location) {
+    // Parse location if it's a string
+    let locationData;
+    try {
+      locationData =
+        typeof location === "string" ? JSON.parse(location) : location;
+    } catch (error) {
       return res.status(400).json({
-        error:
-          "Missing required fields: title, disaster_category, description, and location are required",
+        error: "Invalid location data format",
       });
     }
 
+    // Validate location structure
     if (
-      !location.address ||
-      !location.address.city ||
-      !location.address.district ||
-      !location.address.province
+      !locationData?.address?.city ||
+      !locationData?.address?.district ||
+      !locationData?.address?.province
     ) {
       return res.status(400).json({
         error:
@@ -27,65 +30,25 @@ export const createUserReport = async (req, res) => {
       });
     }
 
-    const validCategories = [
-      "flood",
-      "fire",
-      "earthquake",
-      "landslide",
-      "cyclone",
-    ];
-    if (!validCategories.includes(disaster_category)) {
-      return res.status(400).json({
-        error: "Invalid disaster category",
-      });
-    }
+    // Get image paths from uploaded files
+    const images = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
 
-    if (req.body.images) {
-      const invalidImages = req.body.images.filter(
-        (url) => !url.startsWith("http"),
-      );
-      if (invalidImages.length > 0) {
-        return res.status(400).json({
-          error: "All images must be valid URLs starting with 'http'",
-        });
-      }
-    }
-
+    // Create report data
     const reportData = {
-      ...req.body,
-      verification_status: "pending",
-      reporter_type: "anonymous",
+      title,
+      disaster_category,
+      description,
+      location: locationData,
+      images,
     };
 
-    if (user) {
-      reportData.reporter = user._id;
-      reportData.reporter_type = "registered";
-      if (user.isVerified) {
-        reportData.verification_status = "verified";
-        reportData.verification = {
-          verified_by: user._id,
-          verified_at: new Date(),
-          severity: "medium",
-        };
-      }
-    }
 
     const newReport = await UserReports.create(reportData);
-
-    if (user?.isVerified) {
-      await createSystemLog(
-        user._id,
-        "AUTO_VERIFY_REPORT",
-        "user_report",
-        newReport._id,
-        {
-          message: `Report auto-verified by verified user ${user.name}`,
-        },
-      );
-    }
-
     res.status(201).json(newReport);
   } catch (error) {
+    console.error("Create report error:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -349,44 +312,43 @@ export const getVerificationStats = async (req, res) => {
     const stats = await Promise.all([
       // Pending reports count
       UserReports.countDocuments({ verification_status: "pending" }),
-      
+
       // Verified today count
       UserReports.countDocuments({
         verification_status: "verified",
-        "verification.verified_at": { $gte: today }
+        "verification.verified_at": { $gte: today },
       }),
-      
+
       // Active incidents count
       Warning.countDocuments({ status: "active" }),
-      
+
       // Average verification time
       UserReports.aggregate([
         {
-          $match: { 
+          $match: {
             verification_status: "verified",
-            "verification.verification_time": { $exists: true }
-          }
+            "verification.verification_time": { $exists: true },
+          },
         },
         {
           $group: {
             _id: null,
-            avgTime: { 
-              $avg: { 
-                $divide: ["$verification.verification_time", 60] // Convert minutes to hours
-              }
-            }
-          }
-        }
-      ])
+            avgTime: {
+              $avg: {
+                $divide: ["$verification.verification_time", 60], // Convert minutes to hours
+              },
+            },
+          },
+        },
+      ]),
     ]);
 
     res.json({
       pendingCount: stats[0],
-      verifiedToday: stats[1], 
+      verifiedToday: stats[1],
       activeIncidents: stats[2],
-      avgVerificationTime: Math.round(stats[3][0]?.avgTime || 0)
+      avgVerificationTime: Math.round(stats[3][0]?.avgTime || 0),
     });
-
   } catch (error) {
     console.error("Verification stats error:", error);
     res.status(500).json({ error: error.message });
@@ -405,48 +367,50 @@ export const getReportAnalytics = async (req, res) => {
           weeklyTrends: [
             {
               $match: {
-                createdAt: { $gte: weekAgo }
-              }
+                createdAt: { $gte: weekAgo },
+              },
             },
             {
               $group: {
                 _id: {
-                  date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                  status: "$verification_status"
+                  date: {
+                    $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+                  },
+                  status: "$verification_status",
                 },
-                count: { $sum: 1 }
-              }
+                count: { $sum: 1 },
+              },
             },
             {
               $project: {
                 _id: 0,
                 date: "$_id.date",
                 status: "$_id.status",
-                count: 1
-              }
-            }
+                count: 1,
+              },
+            },
           ],
           reportTypes: [
             {
               $group: {
                 _id: "$disaster_category",
-                count: { $sum: 1 }
-              }
+                count: { $sum: 1 },
+              },
             },
             {
               $project: {
                 name: { $ifNull: ["$_id", "Unknown"] },
                 value: "$count",
-                _id: 0
-              }
-            }
+                _id: 0,
+              },
+            },
           ],
           responseTime: [
             {
               $match: {
                 verification_status: "verified",
-                "verification.verification_time": { $exists: true }
-              }
+                "verification.verification_time": { $exists: true },
+              },
             },
             {
               $bucket: {
@@ -454,9 +418,9 @@ export const getReportAnalytics = async (req, res) => {
                 boundaries: [0, 60, 120, 240, Infinity],
                 default: "other",
                 output: {
-                  count: { $sum: 1 }
-                }
-              }
+                  count: { $sum: 1 },
+                },
+              },
             },
             {
               $project: {
@@ -466,23 +430,23 @@ export const getReportAnalytics = async (req, res) => {
                       { case: { $eq: ["$_id", 0] }, then: "<1h" },
                       { case: { $eq: ["$_id", 60] }, then: "1-2h" },
                       { case: { $eq: ["$_id", 120] }, then: "2-4h" },
-                      { case: { $eq: ["$_id", 240] }, then: ">4h" }
+                      { case: { $eq: ["$_id", 240] }, then: ">4h" },
                     ],
-                    default: "other"
-                  }
+                    default: "other",
+                  },
                 },
                 count: 1,
-                _id: 0
-              }
-            }
-          ]
-        }
-      }
+                _id: 0,
+              },
+            },
+          ],
+        },
+      },
     ]);
 
     // Format weekly trends data
     const trendsMap = {};
-    analytics[0].weeklyTrends.forEach(item => {
+    analytics[0].weeklyTrends.forEach((item) => {
       if (!trendsMap[item.date]) {
         trendsMap[item.date] = { date: item.date };
       }
@@ -492,7 +456,7 @@ export const getReportAnalytics = async (req, res) => {
     const formattedResponse = {
       weeklyTrends: Object.values(trendsMap),
       reportTypes: analytics[0].reportTypes,
-      responseTime: analytics[0].responseTime
+      responseTime: analytics[0].responseTime,
     };
 
     res.json(formattedResponse);
@@ -637,7 +601,7 @@ export const getFeedStats = async (req, res) => {
         warningStats,
         activeWarnings: warningStats.reduce(
           (acc, curr) => acc + curr.active_warnings,
-          0
+          0,
         ),
       },
     });
