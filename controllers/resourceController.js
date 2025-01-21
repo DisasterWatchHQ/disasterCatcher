@@ -12,6 +12,11 @@ export const createResource = async (req, res) => {
       contact,
       availability_status,
       content,
+      metadata,
+      tags,
+      operating_hours,
+      capacity,
+      emergency_level,
     } = req.body;
 
     // Create base resource data
@@ -21,6 +26,9 @@ export const createResource = async (req, res) => {
       type,
       contact,
       added_by: req.user.id,
+      status: "active",
+      tags: tags || [],
+      metadata: metadata || {},
     };
 
     // Add category-specific fields
@@ -48,6 +56,10 @@ export const createResource = async (req, res) => {
 
       resourceData.location = locationData;
       resourceData.availability_status = availability_status;
+      resourceData.operating_hours = operating_hours;
+      if (type === "shelter") {
+        resourceData.capacity = capacity;
+      }
     }
 
     if (category === "guide") {
@@ -55,12 +67,15 @@ export const createResource = async (req, res) => {
       resourceData.content = content;
     }
 
+    if (category === "emergency_contact") {
+      resourceData.emergency_level = emergency_level;
+    }
+
     const resource = new Resource(resourceData);
     const savedResource = await resource.save();
-
     await createSystemLog(
       req.user.id,
-      "CREATE_RESOURCE", // Instead of 'CREATE'
+      "CREATE_RESOURCE",
       "resource",
       resource._id,
       {
@@ -89,14 +104,20 @@ export const getFacilities = async (req, res) => {
       city,
       district,
       province,
+      status,
+      tags,
       limit = 10,
       page = 1,
     } = req.query;
 
-    const query = { category: "facility" };
+    const query = {
+      category: "facility",
+      status: status || "active",
+    };
 
     if (type) query.type = type;
     if (availability_status) query.availability_status = availability_status;
+    if (tags) query.tags = { $in: tags.split(",") };
 
     if (city || district || province) {
       if (city)
@@ -117,6 +138,7 @@ export const getFacilities = async (req, res) => {
 
     const resources = await Resource.find(query)
       .populate("added_by", "name email")
+      .sort({ last_verified: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
@@ -136,15 +158,21 @@ export const getFacilities = async (req, res) => {
 
 export const getGuides = async (req, res) => {
   try {
-    const { type, limit = 10, page = 1 } = req.query;
+    const { type, tags, limit = 10, page = 1 } = req.query;
 
-    const query = { category: "guide" };
+    const query = {
+      category: "guide",
+      status: "active",
+    };
+
     if (type) query.type = type;
+    if (tags) query.tags = { $in: tags.split(",") };
 
     const skip = (page - 1) * limit;
 
     const resources = await Resource.find(query)
       .populate("added_by", "name email")
+      .sort({ last_verified: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
@@ -164,9 +192,18 @@ export const getGuides = async (req, res) => {
 
 export const getEmergencyContacts = async (req, res) => {
   try {
-    const resources = await Resource.find({
+    const { emergency_level } = req.query;
+
+    const query = {
       category: "emergency_contact",
-    }).populate("added_by", "name email");
+      status: "active",
+    };
+
+    if (emergency_level) query.emergency_level = emergency_level;
+
+    const resources = await Resource.find(query)
+      .populate("added_by", "name email")
+      .sort({ emergency_level: -1 });
 
     res.status(200).json({
       success: true,
@@ -179,37 +216,34 @@ export const getEmergencyContacts = async (req, res) => {
 
 export const getNearbyFacilities = async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 10000, type } = req.query;
+    const { latitude, longitude, maxDistance = 10000, type, availability_status } = req.query;
 
     if (!latitude || !longitude) {
-      return res
-        .status(400)
-        .json({ message: "Latitude and longitude are required" });
+      return res.status(400).json({ message: "Latitude and longitude are required" });
     }
 
     const query = {
-      category: "facility",
-      "location.coordinates": {
-        $nearSphere: {
+      category: 'facility',
+      status: 'active',
+      'location.coordinates': {
+        $near: {
           $geometry: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)]
           },
-          $maxDistance: parseFloat(maxDistance),
-        },
-      },
+          $maxDistance: parseFloat(maxDistance)
+        }
+      }
     };
 
     if (type) query.type = type;
+    if (availability_status) query.availability_status = availability_status;
 
-    const resources = await Resource.find(query).populate(
-      "added_by",
-      "name email",
-    );
+    const resources = await Resource.find(query).populate("added_by", "name email");
 
     res.status(200).json({
       success: true,
-      data: resources,
+      data: resources
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -244,14 +278,14 @@ export const updateResource = async (req, res) => {
     }
 
     // Check if user is authorized to update
-    if (
-      req.user.type !== "admin" &&
-      originalResource.added_by.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update this resource" });
-    }
+    // if (
+    //   req.user.type !== "admin" &&
+    //   originalResource.added_by.toString() !== req.user.id
+    // ) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Not authorized to update this resource" });
+    // }
 
     const updatedResource = await Resource.findByIdAndUpdate(
       req.params.id,
@@ -288,14 +322,14 @@ export const deleteResource = async (req, res) => {
     }
 
     // Check if user is authorized to delete
-    if (
-      req.user.type !== "admin" &&
-      resource.added_by.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to delete this resource" });
-    }
+    // if (
+    //   req.user.type !== "admin" &&
+    //   resource.added_by.toString() !== req.user.id
+    // ) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Not authorized to delete this resource" });
+    // }
 
     await Resource.findByIdAndDelete(req.params.id);
 

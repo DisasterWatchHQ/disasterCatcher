@@ -6,13 +6,13 @@ import {
 } from "../controllers/weatherController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(protectRoute, verifyToken, verifyUserType(["admin"]));
+router.use(protectRoute, verifyToken, verifyVerifiedUser);
 
 router.get("/current", getCurrentLocationWeather);
 router.get("/saved/:locationId", getSavedLocationWeather);

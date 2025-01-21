@@ -50,35 +50,9 @@ export const protectRoute = async (req, res, next) => {
   }
 };
 
-// Middleware for checking user types
-export const verifyUserType = (allowedTypes) => {
-  return (req, res, next) => {
-    try {
-      // Check if user exists and has the correct type
-      if (!req.user || !allowedTypes.includes(req.user.type)) {
-        // Changed from userType to type
-        return res.status(403).json({
-          success: false,
-          message: "Access denied. Insufficient permissions.",
-        });
-      }
-      next();
-    } catch (error) {
-      console.error("User Type Verification Error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error verifying user type.",
-      });
-    }
-  };
-};
-
-// Middleware for verified users
 export const verifyVerifiedUser = async (req, res, next) => {
   try {
-    // Check if user exists and is verified
-    if (!req.user || !req.user.verification_status) {
-      // Changed from isVerified to verification_status
+    if (!req.user || !req.user.isVerified) {
       return res.status(403).json({
         success: false,
         message: "Access denied. This action requires a verified user.",
@@ -86,7 +60,6 @@ export const verifyVerifiedUser = async (req, res, next) => {
     }
     next();
   } catch (error) {
-    console.error("Verified User Check Error:", error);
     return res.status(500).json({
       success: false,
       message: "Error checking user verification status.",
@@ -94,26 +67,6 @@ export const verifyVerifiedUser = async (req, res, next) => {
   }
 };
 
-// Middleware for admin users
-export const verifyAdmin = async (req, res, next) => {
-  try {
-    // Check if user exists and is admin
-    if (!req.user || req.user.type !== "admin") {
-      // Changed from userType to type
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Admin privileges required.",
-      });
-    }
-    next();
-  } catch (error) {
-    console.error("Admin Verification Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error verifying admin status.",
-    });
-  }
-};
 
 export const verifyToken = (req, res, next) => {
   console.log("Cookies:", req.cookies);
@@ -129,6 +82,7 @@ export const verifyToken = (req, res, next) => {
   try {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
+    
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid Token." });
