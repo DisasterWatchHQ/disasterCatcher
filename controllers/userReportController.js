@@ -371,8 +371,10 @@ export const getReportAnalytics = async (req, res) => {
             {
               $group: {
                 _id: {
-                  date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                  status: "$verification_status"
+                  date: {
+                    $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+                  },
+                  status: "$verification_status",
                 },
                 count: { $sum: 1 }
               }
