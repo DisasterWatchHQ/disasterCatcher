@@ -6,20 +6,22 @@ import { createSystemLog } from "./adminLogsController.js";
 export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
-    const user = req.user;
 
-    if (!title || !disaster_category || !description || !location) {
+    let locationData;
+    try {
+      locationData =
+        typeof location === "string" ? JSON.parse(location) : location;
+    } catch (error) {
       return res.status(400).json({
-        error:
-          "Missing required fields: title, disaster_category, description, and location are required",
+        error: "Invalid location data format",
       });
     }
 
+    // Validate location structure
     if (
-      !location.address ||
-      !location.address.city ||
-      !location.address.district ||
-      !location.address.province
+      !locationData?.address?.city ||
+      !locationData?.address?.district ||
+      !locationData?.address?.province
     ) {
       return res.status(400).json({
         error:
@@ -27,65 +29,24 @@ export const createUserReport = async (req, res) => {
       });
     }
 
-    const validCategories = [
-      "flood",
-      "fire",
-      "earthquake",
-      "landslide",
-      "cyclone",
-    ];
-    if (!validCategories.includes(disaster_category)) {
-      return res.status(400).json({
-        error: "Invalid disaster category",
-      });
-    }
-
-    if (req.body.images) {
-      const invalidImages = req.body.images.filter(
-        (url) => !url.startsWith("http"),
-      );
-      if (invalidImages.length > 0) {
-        return res.status(400).json({
-          error: "All images must be valid URLs starting with 'http'",
-        });
-      }
-    }
+    // Get image paths from uploaded files
+    const images = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
 
     const reportData = {
-      ...req.body,
-      verification_status: "pending",
-      reporter_type: "anonymous",
+      title,
+      disaster_category,
+      description,
+      location: locationData,
+      images,
     };
 
-    if (user) {
-      reportData.reporter = user._id;
-      reportData.reporter_type = "registered";
-      if (user.isVerified) {
-        reportData.verification_status = "verified";
-        reportData.verification = {
-          verified_by: user._id,
-          verified_at: new Date(),
-          severity: "medium",
-        };
-      }
-    }
 
     const newReport = await UserReports.create(reportData);
-
-    if (user?.isVerified) {
-      await createSystemLog(
-        user._id,
-        "AUTO_VERIFY_REPORT",
-        "user_report",
-        newReport._id,
-        {
-          message: `Report auto-verified by verified user ${user.name}`,
-        },
-      );
-    }
-
     res.status(201).json(newReport);
   } catch (error) {
+    console.error("Create report error:", error);
     res.status(500).json({ error: error.message });
   }
 };
