@@ -8,7 +8,18 @@ import { errorHandler, routeNotFound } from "./middlewares/errorMiddleware.js";
 import routes from "./routes/index.js";
 import Scheduler from "./utils/scheduler.js";
 import DevScheduler from "./utils/devScheduler.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 dotenv.config();
 
 connectMongoose();
@@ -47,13 +58,16 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(morgan("dev"));
 
+app.use("/api/uploads", express.static("uploads"));
 app.use("/api", routes);
 
 app.use(routeNotFound);
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== "dev") {
-  app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+  app.listen(5000, "0.0.0.0", () => {
+    console.log("Server running on port 5000");
+  });
 }
 
 export default app;
