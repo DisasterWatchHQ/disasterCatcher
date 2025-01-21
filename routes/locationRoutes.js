@@ -8,7 +8,7 @@ import {
 } from "../controllers/locationController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 

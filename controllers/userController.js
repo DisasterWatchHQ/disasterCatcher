@@ -15,19 +15,17 @@ export const createUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ 
-      $or: [
-        { email: email.toLowerCase() },
-        { workId: workId }
-      ]
+    const existingUser = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { workId: workId }],
     });
-    
+
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: existingUser.email === email.toLowerCase() 
-          ? "Email already registered." 
-          : "Work ID already registered.",
+        message:
+          existingUser.email === email.toLowerCase()
+            ? "Email already registered."
+            : "Work ID already registered.",
       });
     }
 
@@ -63,7 +61,7 @@ export const getAllUsers = async (req, res) => {
     const query = {};
     if (department) query.associated_department = department;
     if (email) query.email = new RegExp(email, "i");
-    if (isVerified !== undefined) query.isVerified = isVerified === 'true';
+    if (isVerified !== undefined) query.isVerified = isVerified === "true";
 
     const users = await User.find(query)
       .skip((page - 1) * limit)
@@ -200,12 +198,13 @@ export const authenticateUser = async (req, res) => {
       });
     }
 
-    if (!user.isVerified) {
-      return res.status(401).json({
-        success: false,
-        message: "Account not verified. Please wait for verification.",
-      });
-    }
+    // Holding this  because verification process need tobe implemented
+    // if (!user.isVerified) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Account not verified. Please wait for verification.",
+    //   });
+    // }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
@@ -220,7 +219,7 @@ export const authenticateUser = async (req, res) => {
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user._id, isVerified: user.isVerified },
       process.env.JWT_SECRET,
       { expiresIn: "24h" },
     );
@@ -241,7 +240,7 @@ export const authenticateUser = async (req, res) => {
         name: user.name,
         email: user.email,
         department: user.associated_department,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
       },
     });
   } catch (error) {

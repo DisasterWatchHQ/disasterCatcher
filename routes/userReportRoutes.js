@@ -1,29 +1,45 @@
 import express from "express";
 import {
   createUserReport,
+  verifyReport,
+  dismissReport,
   getUserReports,
-  getUserReportById,
-  updateUserReport,
-  deleteUserReport,
+  getReportsByUser,
+  getReportStats,
+  getVerificationStats,
+  getReportAnalytics,
+  getPublicFeed,
+  getFeedReports,
+  getFeedStats,
+  getFeedUpdates,
 } from "../controllers/userReportController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+router.get("/feed", getPublicFeed);
+router.post("/", createUserReport);
+router.get("/public", getUserReports);
+router.get('/reports', getFeedReports);
+router.get('/feedstats', getFeedStats);
+router.get('/updates', getFeedUpdates);
+
 router.use(protectRoute, verifyToken);
 
-router.post("/", verifyUserType(["user", "verified"]), createUserReport);
-router.get("/", getUserReports);
-router.get("/:id", getUserReportById);
-router.put("/:id", verifyUserType(["user", "verified"]), updateUserReport);
-router.delete(
-  "/:id",
-  verifyUserType(["user", "admin", "verified"]),
-  deleteUserReport,
-);
+router.get("/my-reports", getReportsByUser);
+router.get("/stats/verification", getVerificationStats);
+router.get("/stats/analytics", getReportAnalytics);
+
+router.use(verifyVerifiedUser);
+
+router.post("/:id/verify", verifyReport);
+router.post("/:id/dismiss", dismissReport);
+
+router.get("/stats", getReportStats);
+router.get("/verified", getUserReports);
 
 export default router;

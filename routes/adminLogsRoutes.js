@@ -5,13 +5,13 @@ import {
 } from "../controllers/adminLogsController.js";
 import {
   protectRoute,
-  verifyUserType,
+  verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(protectRoute, verifyToken, verifyUserType(["admin", "verified"]));
+router.use(protectRoute, verifyToken, verifyVerifiedUser);
 
 router.get("/", getAdminLogs);
 router.get("/:id", getAdminLogById);
