@@ -7,6 +7,7 @@ export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
 
+    // Parse location if it's a string
     let locationData;
     try {
       locationData =
@@ -34,6 +35,7 @@ export const createUserReport = async (req, res) => {
       ? req.files.map((file) => `/uploads/${file.filename}`)
       : [];
 
+    // Create report data
     const reportData = {
       title,
       disaster_category,
