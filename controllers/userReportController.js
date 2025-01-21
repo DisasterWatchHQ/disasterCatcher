@@ -314,40 +314,39 @@ export const getVerificationStats = async (req, res) => {
       // Verified today count
       UserReports.countDocuments({
         verification_status: "verified",
-        "verification.verified_at": { $gte: today }
+        "verification.verified_at": { $gte: today },
       }),
-      
+
       // Active incidents count
       Warning.countDocuments({ status: "active" }),
-      
+
       // Average verification time
       UserReports.aggregate([
         {
-          $match: { 
+          $match: {
             verification_status: "verified",
-            "verification.verification_time": { $exists: true }
-          }
+            "verification.verification_time": { $exists: true },
+          },
         },
         {
           $group: {
             _id: null,
-            avgTime: { 
-              $avg: { 
-                $divide: ["$verification.verification_time", 60] // Convert minutes to hours
-              }
-            }
-          }
-        }
-      ])
+            avgTime: {
+              $avg: {
+                $divide: ["$verification.verification_time", 60], // Convert minutes to hours
+              },
+            },
+          },
+        },
+      ]),
     ]);
 
     res.json({
       pendingCount: stats[0],
-      verifiedToday: stats[1], 
+      verifiedToday: stats[1],
       activeIncidents: stats[2],
-      avgVerificationTime: Math.round(stats[3][0]?.avgTime || 0)
+      avgVerificationTime: Math.round(stats[3][0]?.avgTime || 0),
     });
-
   } catch (error) {
     console.error("Verification stats error:", error);
     res.status(500).json({ error: error.message });
@@ -366,8 +365,8 @@ export const getReportAnalytics = async (req, res) => {
           weeklyTrends: [
             {
               $match: {
-                createdAt: { $gte: weekAgo }
-              }
+                createdAt: { $gte: weekAgo },
+              },
             },
             {
               $group: {
