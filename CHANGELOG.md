@@ -1,18 +1,27 @@
 # Changelog
 
-## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-19)
+## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-21)
 
 [Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...Unreleased)
 
+**Implemented enhancements:**
+
+- issues: backend controller function issues [\#15](https://github.com/DisasterWatchHQ/disasterCatcher/issues/15)
+- issues: mongodb models not well configured [\#14](https://github.com/DisasterWatchHQ/disasterCatcher/issues/14)
+
 **Fixed bugs:**
 
+- issues: routing issues [\#13](https://github.com/DisasterWatchHQ/disasterCatcher/issues/13)
 - issue: encountering error when running test cases [\#12](https://github.com/DisasterWatchHQ/disasterCatcher/issues/12)
 - issue: missing links [\#10](https://github.com/DisasterWatchHQ/disasterCatcher/issues/10)
 - new user registration failing [\#8](https://github.com/DisasterWatchHQ/disasterCatcher/issues/8)
 
 **Merged pull requests:**
 
+- feat: pushing new changes [\#29](https://github.com/DisasterWatchHQ/disasterCatcher/pull/29) ([5yndr0m](https://github.com/5yndr0m))
+- feat: pushing some major changes. refer changelog [\#27](https://github.com/DisasterWatchHQ/disasterCatcher/pull/27) ([5yndr0m](https://github.com/5yndr0m))
 - build\(deps\): bump mongoose from 8.9.3 to 8.9.5 [\#26](https://github.com/DisasterWatchHQ/disasterCatcher/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
+- feat: latest  dev changes [\#25](https://github.com/DisasterWatchHQ/disasterCatcher/pull/25) ([5yndr0m](https://github.com/5yndr0m))
 - Test [\#24](https://github.com/DisasterWatchHQ/disasterCatcher/pull/24) ([5yndr0m](https://github.com/5yndr0m))
 - build: package update [\#23](https://github.com/DisasterWatchHQ/disasterCatcher/pull/23) ([5yndr0m](https://github.com/5yndr0m))
 - Development [\#22](https://github.com/DisasterWatchHQ/disasterCatcher/pull/22) ([5yndr0m](https://github.com/5yndr0m))
