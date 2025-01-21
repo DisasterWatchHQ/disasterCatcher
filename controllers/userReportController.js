@@ -310,7 +310,7 @@ export const getVerificationStats = async (req, res) => {
     const stats = await Promise.all([
       // Pending reports count
       UserReports.countDocuments({ verification_status: "pending" }),
-      
+
       // Verified today count
       UserReports.countDocuments({
         verification_status: "verified",
@@ -376,39 +376,39 @@ export const getReportAnalytics = async (req, res) => {
                   },
                   status: "$verification_status",
                 },
-                count: { $sum: 1 }
-              }
+                count: { $sum: 1 },
+              },
             },
             {
               $project: {
                 _id: 0,
                 date: "$_id.date",
                 status: "$_id.status",
-                count: 1
-              }
-            }
+                count: 1,
+              },
+            },
           ],
           reportTypes: [
             {
               $group: {
                 _id: "$disaster_category",
-                count: { $sum: 1 }
-              }
+                count: { $sum: 1 },
+              },
             },
             {
               $project: {
                 name: { $ifNull: ["$_id", "Unknown"] },
                 value: "$count",
-                _id: 0
-              }
-            }
+                _id: 0,
+              },
+            },
           ],
           responseTime: [
             {
               $match: {
                 verification_status: "verified",
-                "verification.verification_time": { $exists: true }
-              }
+                "verification.verification_time": { $exists: true },
+              },
             },
             {
               $bucket: {
@@ -416,9 +416,9 @@ export const getReportAnalytics = async (req, res) => {
                 boundaries: [0, 60, 120, 240, Infinity],
                 default: "other",
                 output: {
-                  count: { $sum: 1 }
-                }
-              }
+                  count: { $sum: 1 },
+                },
+              },
             },
             {
               $project: {
@@ -428,23 +428,23 @@ export const getReportAnalytics = async (req, res) => {
                       { case: { $eq: ["$_id", 0] }, then: "<1h" },
                       { case: { $eq: ["$_id", 60] }, then: "1-2h" },
                       { case: { $eq: ["$_id", 120] }, then: "2-4h" },
-                      { case: { $eq: ["$_id", 240] }, then: ">4h" }
+                      { case: { $eq: ["$_id", 240] }, then: ">4h" },
                     ],
-                    default: "other"
-                  }
+                    default: "other",
+                  },
                 },
                 count: 1,
-                _id: 0
-              }
-            }
-          ]
-        }
-      }
+                _id: 0,
+              },
+            },
+          ],
+        },
+      },
     ]);
 
     // Format weekly trends data
     const trendsMap = {};
-    analytics[0].weeklyTrends.forEach(item => {
+    analytics[0].weeklyTrends.forEach((item) => {
       if (!trendsMap[item.date]) {
         trendsMap[item.date] = { date: item.date };
       }
@@ -454,7 +454,7 @@ export const getReportAnalytics = async (req, res) => {
     const formattedResponse = {
       weeklyTrends: Object.values(trendsMap),
       reportTypes: analytics[0].reportTypes,
-      responseTime: analytics[0].responseTime
+      responseTime: analytics[0].responseTime,
     };
 
     res.json(formattedResponse);
@@ -599,7 +599,7 @@ export const getFeedStats = async (req, res) => {
         warningStats,
         activeWarnings: warningStats.reduce(
           (acc, curr) => acc + curr.active_warnings,
-          0
+          0,
         ),
       },
     });
