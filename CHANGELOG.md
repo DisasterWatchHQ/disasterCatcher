@@ -18,6 +18,8 @@
 
 **Merged pull requests:**
 
+- feat: something uasable  [\#31](https://github.com/DisasterWatchHQ/disasterCatcher/pull/31) ([5yndr0m](https://github.com/5yndr0m))
+- minor: adding supports for images with reports [\#30](https://github.com/DisasterWatchHQ/disasterCatcher/pull/30) ([5yndr0m](https://github.com/5yndr0m))
 - feat: pushing new changes [\#29](https://github.com/DisasterWatchHQ/disasterCatcher/pull/29) ([5yndr0m](https://github.com/5yndr0m))
 - feat: pushing some major changes. refer changelog [\#27](https://github.com/DisasterWatchHQ/disasterCatcher/pull/27) ([5yndr0m](https://github.com/5yndr0m))
 - build\(deps\): bump mongoose from 8.9.3 to 8.9.5 [\#26](https://github.com/DisasterWatchHQ/disasterCatcher/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
