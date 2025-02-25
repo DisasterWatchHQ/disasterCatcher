@@ -7,7 +7,25 @@ const locationSchema = new Schema({
     enum: ["point", "address"],
   },
   coordinates: {
-    type: [Number], //[longitude, latitude]
+    type: [Number],
+    required: function () {
+      return this.type === "point";
+    },
+    validate: {
+      validator: function (coords) {
+        return (
+          Array.isArray(coords) &&
+          coords.length === 2 &&
+          !isNaN(coords[0]) &&
+          !isNaN(coords[1]) &&
+          coords[0] >= -180 &&
+          coords[0] <= 180 &&
+          coords[1] >= -90 &&
+          coords[1] <= 90
+        );
+      },
+      message: "Coordinates must be valid [longitude, latitude] pairs",
+    },
     index: "2dsphere",
   },
   address: {
@@ -99,60 +117,62 @@ const resourceSchema = new Schema(
     metadata: {
       type: Schema.Types.Mixed,
       validate: {
-        validator: function(v) {
-          switch(this.category) {
-            case 'facility':
+        validator: function (v) {
+          switch (this.category) {
+            case "facility":
               return v?.capacity !== undefined;
-            case 'guide':
+            case "guide":
               return v?.lastUpdated !== undefined;
-            case 'emergency_contact':
+            case "emergency_contact":
               return v?.serviceHours !== undefined;
             default:
               return true;
           }
         },
-        message: 'Invalid metadata for resource category'
-      }
+        message: "Invalid metadata for resource category",
+      },
     },
     status: {
       type: String,
-      enum: ['active', 'inactive', 'maintenance'],
-      default: 'active'
+      enum: ["active", "inactive", "maintenance"],
+      default: "active",
     },
-    tags: [{
-      type: String,
-      trim: true
-    }],
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     operating_hours: {
       type: Map,
       of: {
         open: String,
         close: String,
-        is24Hours: Boolean
-      }
+        is24Hours: Boolean,
+      },
     },
     capacity: {
       type: Number,
       min: 0,
-      required: function() {
-        return this.category === 'facility' && this.type === 'shelter';
-      }
+      required: function () {
+        return this.category === "facility" && this.type === "shelter";
+      },
     },
     emergency_level: {
       type: String,
-      enum: ['low', 'medium', 'high'],
-      required: function() {
-        return this.category === 'emergency_contact';
-      }
+      enum: ["low", "medium", "high"],
+      required: function () {
+        return this.category === "emergency_contact";
+      },
     },
     last_verified: {
       type: Date,
-      default: Date.now
-    }
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // resourceSchema.index({ "location.coordinates": "2dsphere" });
@@ -160,50 +180,55 @@ resourceSchema.index({ category: 1, type: 1 });
 resourceSchema.index({ tags: 1 });
 resourceSchema.index({ status: 1 });
 
-resourceSchema.methods.getAvailability = function() {
-  if (this.category === 'facility') {
+resourceSchema.methods.getAvailability = function () {
+  if (this.category === "facility") {
     return this.availability_status;
   }
   return null;
 };
 
-resourceSchema.methods.isOperational = function() {
-  return this.status === 'active' && 
-    (this.category !== 'facility' || this.availability_status === 'open');
+resourceSchema.methods.isOperational = function () {
+  return (
+    this.status === "active" &&
+    (this.category !== "facility" || this.availability_status === "open")
+  );
 };
 
-resourceSchema.statics.findNearby = async function(coordinates, maxDistance = 5000) {
+resourceSchema.statics.findNearby = async function (
+  coordinates,
+  maxDistance = 5000,
+) {
   return this.find({
-    'location.coordinates': {
+    "location.coordinates": {
       $near: {
         $geometry: {
-          type: 'Point',
-          coordinates: coordinates
+          type: "Point",
+          coordinates: coordinates,
         },
-        $maxDistance: maxDistance
-      }
-    }
+        $maxDistance: maxDistance,
+      },
+    },
   });
 };
 
-resourceSchema.statics.findByType = async function(type) {
-  return this.find({ type, status: 'active' });
+resourceSchema.statics.findByType = async function (type) {
+  return this.find({ type, status: "active" });
 };
 
-resourceSchema.statics.findActiveGuides = async function() {
-  return this.find({ 
-    category: 'guide',
-    status: 'active'
+resourceSchema.statics.findActiveGuides = async function () {
+  return this.find({
+    category: "guide",
+    status: "active",
   }).sort({ last_verified: -1 });
 };
 
-resourceSchema.virtual('isVerified').get(function() {
+resourceSchema.virtual("isVerified").get(function () {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   return this.last_verified >= oneMonthAgo;
 });
 
-resourceSchema.pre('save', function(next) {
+resourceSchema.pre("save", function (next) {
   if (this.isModified()) {
     this.last_verified = new Date();
   }
