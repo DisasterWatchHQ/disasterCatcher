@@ -7,8 +7,6 @@ dotenv.config();
 export const connectMongoose = async () => {
   try {
     const connection = await mongoose.connect(process.env.MONGODB_URI, {
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
       serverApi: ServerApiVersion.v1,
     });
 
@@ -30,6 +28,7 @@ export const connectMongoose = async () => {
   }
 };
 
+// In a case of above not working please use the below code
 // For native mongodb client
 // export const getMongoClient = async () => {
 //   const uri = process.env.MONGODB_URI;
@@ -54,17 +53,16 @@ export const connectMongoose = async () => {
 //   }
 // };
 //
+
 export const createJWT = (res, userId) => {
-  //creates JWT token
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 
-  // Change sameSite from strict to none when you deploy your app
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV !== "dev",
-    sameSite: "strict", //prevent CSRF attack
-    maxAge: 1 * 24 * 60 * 60 * 1000, //1 day
+    sameSite: "strict", 
+    maxAge: 1 * 24 * 60 * 60 * 1000,
   });
 };
