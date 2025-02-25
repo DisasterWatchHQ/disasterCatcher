@@ -1,8 +1,17 @@
 # Changelog
 
-## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-01-21)
+## [Unreleased](https://github.com/DisasterWatchHQ/disasterCatcher/tree/Unreleased) (2025-02-25)
 
-[Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...Unreleased)
+[Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/v0.0.1...Unreleased)
+
+**Merged pull requests:**
+
+- feat: tested changes [\#33](https://github.com/DisasterWatchHQ/disasterCatcher/pull/33) ([5yndr0m](https://github.com/5yndr0m))
+- feat: some minor changes [\#32](https://github.com/DisasterWatchHQ/disasterCatcher/pull/32) ([5yndr0m](https://github.com/5yndr0m))
+
+## [v0.0.1](https://github.com/DisasterWatchHQ/disasterCatcher/tree/v0.0.1) (2025-01-21)
+
+[Full Changelog](https://github.com/DisasterWatchHQ/disasterCatcher/compare/3f3b2e73091cb22438ade1679c0885d1bafb2b06...v0.0.1)
 
 **Implemented enhancements:**
 
