@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/users.js";
 
-// Main authentication middleware
 export const protectRoute = async (req, res, next) => {
   try {
     let token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
@@ -14,24 +13,14 @@ export const protectRoute = async (req, res, next) => {
         if (!user) throw new Error("Invalid token or user not found");
       } catch (error) {
         if (error.name === "TokenExpiredError") {
-          return res
-            .status(401)
-            .json({
-              success: false,
-              message: "Token expired, please log in again.",
-            });
+          return res.status(401).json({ success: false, message: "Token expired, please log in again." });
         } else if (error.name === "JsonWebTokenError") {
-          return res
-            .status(401)
-            .json({ success: false, message: "Invalid token format." });
+          return res.status(401).json({ success: false, message: "Invalid token format." });
         } else {
-          return res
-            .status(401)
-            .json({ success: false, message: "Error verifying token." });
+          return res.status(401).json({ success: false, message: "Error verifying token." });
         }
       }
     } else {
-      // Handle anonymous users
       if (!req.session.pseudoUser) {
         req.session.pseudoUser = {
           id: `anon_${Date.now()}`,
@@ -53,20 +42,13 @@ export const protectRoute = async (req, res, next) => {
 export const verifyVerifiedUser = async (req, res, next) => {
   try {
     if (!req.user || !req.user.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. This action requires a verified user.",
-      });
+      return res.status(403).json({ success: false, message: "Access denied. This action requires a verified user." });
     }
     next();
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error checking user verification status.",
-    });
+    return res.status(500).json({ success: false, message: "Error checking user verification status." });
   }
 };
-
 
 export const verifyToken = (req, res, next) => {
   console.log("Cookies:", req.cookies);
@@ -74,15 +56,12 @@ export const verifyToken = (req, res, next) => {
 
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Access Denied. No Token Provided." });
+    return res.status(401).json({ success: false, message: "Access Denied. No Token Provided." });
   }
 
   try {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
-    
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid Token." });

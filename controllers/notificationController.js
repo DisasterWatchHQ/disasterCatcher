@@ -1,12 +1,6 @@
 import Notification from "../models/notifications.js";
 
-// System methods (not exposed via routes)
-export const createSystemNotification = async (
-  userId,
-  message,
-  type,
-  priority = "medium",
-) => {
+export const createSystemNotification = async (userId, message, type, priority = "medium") => {
   try {
     return await Notification.create({
       user_id: userId,
@@ -37,7 +31,6 @@ export const createAlertNotification = async (userId, alertData) => {
   }
 };
 
-// Route handlers
 export const getMyNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ user_id: req.user.id })
@@ -110,6 +103,29 @@ export const deleteNotification = async (req, res) => {
     }
 
     res.status(200).json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const removeNotification = async (req, res) => {
+  try {
+    const { type, status, priority } = req.query;
+    const query = { user_id: req.user.id };
+
+    if (type) query.type = type;
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+
+    const deletedNotifications = await Notification.deleteMany(query);
+
+    if (deletedNotifications.deletedCount === 0) {
+      return res.status(404).json({ message: "No matching notifications found to remove" });
+    }
+
+    res.status(200).json({
+      message: `${deletedNotifications.deletedCount} notifications removed successfully`,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -45,10 +45,8 @@ app.use("/api", routes);
 app.use(routeNotFound);
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== "dev") {
-  app.listen(5000, "0.0.0.0", () => {
-    console.log("Server running on port 5000");
-  });
-}
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 export default app;

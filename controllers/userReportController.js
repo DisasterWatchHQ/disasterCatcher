@@ -44,7 +44,6 @@ export const createUserReport = async (req, res) => {
       images,
     };
 
-
     const newReport = await UserReports.create(reportData);
     res.status(201).json(newReport);
   } catch (error) {
@@ -502,6 +501,7 @@ export const getFeedReports = async (req, res) => {
       limit = 10,
       disaster_category,
       verified_only,
+      district, // Add district parameter
     } = req.query;
 
     // Build query object
@@ -514,6 +514,11 @@ export const getFeedReports = async (req, res) => {
 
     if (disaster_category) {
       query.disaster_category = disaster_category;
+    }
+
+    // Add district filter
+    if (district) {
+      query["location.address.district"] = district;
     }
 
     // Get reports
@@ -535,6 +540,7 @@ export const getFeedReports = async (req, res) => {
           description: report.description,
           disaster_category: report.disaster_category,
           location: report.location,
+          district: report.location.address.district, // Include district in response
           date_time: report.date_time,
           images: report.images,
           verification_status: report.verification_status,
