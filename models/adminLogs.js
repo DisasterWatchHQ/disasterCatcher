@@ -34,7 +34,7 @@ const adminLogSchema = new Schema(
     target_type: {
       type: String,
       required: true,
-      enum: ["resource", "incident_report", "user_report", "user", "feedback"],
+      enum: ["resource", "incident_report", "user_report", "user", "feedback","warning"],
     },
     target_id: {
       type: Schema.Types.ObjectId,
