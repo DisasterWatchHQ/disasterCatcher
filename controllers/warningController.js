@@ -78,15 +78,15 @@ export const createWarning = async (req, res) => {
 
     const newWarning = await Warning.create(warningData);
 
-    await createSystemLog(
-      created_by,
-      "CREATE_WARNING",
-      "warning",
-      newWarning._id,
-      {
-        message: `New warning created with ID ${newWarning._id}`,
-      },
-    );
+    // await createSystemLog(
+    //   created_by,
+    //   "CREATE_WARNING",
+    //   "warning",
+    //   newWarning._id,
+    //   {
+    //     message: `New warning created with ID ${newWarning._id}`,
+    //   },
+    // );
 
     res.status(201).json(newWarning);
   } catch (error) {
