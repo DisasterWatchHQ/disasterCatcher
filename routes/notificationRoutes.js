@@ -6,6 +6,7 @@ import {
   markAllAsRead,
   deleteNotification,
   removeNotification,
+  registerPushToken
 } from "../controllers/notificationController.js";
 import { protectRoute, verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -19,5 +20,6 @@ router.put("/:id/mark-read", markAsRead);
 router.put("/mark-all-read", markAllAsRead);
 router.delete("/:id", deleteNotification);
 router.delete("/remove", removeNotification);
+router.post("/register-push-token", protectRoute, verifyToken, registerPushToken);
 
 export default router;

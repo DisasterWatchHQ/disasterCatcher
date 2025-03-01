@@ -9,6 +9,7 @@ import routes from "./routes/index.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { Expo } from 'expo-server-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -1,23 +1,51 @@
 import Notification from "../models/notifications.js";
+import { sendPushNotification } from '../services/notificationService.js';
 
 export const createSystemNotification = async (userId, message, type, priority = "medium") => {
   try {
-    return await Notification.create({
+    const notification = await Notification.create({
       user_id: userId,
       message,
       type,
       priority,
       source: "system",
     });
+
+    const existingNotification = await Notification.findOne({ 
+      user_id: userId, 
+      pushToken: { $exists: true } 
+    });
+    
+    if (existingNotification?.pushToken) {
+      await sendPushNotification(existingNotification.pushToken, notification);
+    }
+
+    return notification;
   } catch (error) {
     console.error("Error creating system notification:", error);
     return null;
   }
 };
 
+export const registerPushToken = async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    const userId = req.user.id;
+
+    await Notification.updateMany(
+      { user_id: userId },
+      { pushToken }
+    );
+
+    res.status(200).json({ message: 'Push token registered successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const createAlertNotification = async (userId, alertData) => {
   try {
-    return await Notification.create({
+    const notification = await Notification.create({
       user_id: userId,
       message: alertData.message,
       type: "alert",
@@ -25,6 +53,17 @@ export const createAlertNotification = async (userId, alertData) => {
       source: "alert_system",
       metadata: new Map(Object.entries(alertData)),
     });
+
+    const existingNotification = await Notification.findOne({ 
+      user_id: userId, 
+      pushToken: { $exists: true } 
+    });
+    
+    if (existingNotification?.pushToken) {
+      await sendPushNotification(existingNotification.pushToken, notification);
+    }
+
+    return notification;
   } catch (error) {
     console.error("Error creating alert notification:", error);
     return null;
