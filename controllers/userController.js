@@ -35,7 +35,7 @@ export const createUser = async (req, res) => {
       password,
       workId,
       associated_department,
-      isVerified: false, // Default to unverified
+      isVerified: false, 
     });
 
     res.status(201).json({
@@ -131,7 +131,6 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    // Prevent password update through this endpoint
     delete updates.password;
 
     const user = await User.findByIdAndUpdate(
@@ -214,7 +213,6 @@ export const authenticateUser = async (req, res) => {
       });
     }
 
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
 

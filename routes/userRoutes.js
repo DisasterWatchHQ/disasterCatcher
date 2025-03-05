@@ -15,7 +15,6 @@ const router = express.Router();
 router.post("/login", authenticateUser);
 router.post("/register", createUser);
 
-// All routes below this middleware require authentication
 router.use(protectRoute, verifyToken);
 
 router.get("/", getAllUsers);

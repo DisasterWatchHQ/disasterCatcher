@@ -1,7 +1,7 @@
 import Warning from "../models/warning.js";
 import { createSystemLog } from "./adminLogsController.js";
+import { notificationController } from "./notificationController.js";
 
-// Create a new warning
 export const createWarning = async (req, res) => {
   try {
     const {
@@ -32,7 +32,6 @@ export const createWarning = async (req, res) => {
       });
     }
 
-    // Validate locations
     const invalidLocations = affected_locations.filter(
       (location) =>
         !location.address?.city ||
@@ -78,15 +77,17 @@ export const createWarning = async (req, res) => {
 
     const newWarning = await Warning.create(warningData);
 
-    // await createSystemLog(
-    //   created_by,
-    //   "CREATE_WARNING",
-    //   "warning",
-    //   newWarning._id,
-    //   {
-    //     message: `New warning created with ID ${newWarning._id}`,
-    //   },
-    // );
+    notificationController.broadcast(
+      {
+        type: "NEW_WARNING",
+        title: title,
+        severity: severity,
+        disaster_category: disaster_category,
+        affected_locations: affected_locations,
+        warningId: newWarning._id,
+      },
+      affected_locations[0],
+    );
 
     res.status(201).json(newWarning);
   } catch (error) {
@@ -94,7 +95,6 @@ export const createWarning = async (req, res) => {
   }
 };
 
-// Add update to existing warning
 export const addWarningUpdate = async (req, res) => {
   try {
     const { update_text, severity_change } = req.body;
@@ -119,10 +119,13 @@ export const addWarningUpdate = async (req, res) => {
 
     const updateData = {
       update_text,
-      updated_at: new Date()
+      updated_at: new Date(),
     };
 
-    if (severity_change && ['low', 'medium', 'high', 'critical'].includes(severity_change)) {
+    if (
+      severity_change &&
+      ["low", "medium", "high", "critical"].includes(severity_change)
+    ) {
       updateData.severity_change = severity_change;
       warning.severity = severity_change;
     }
@@ -130,14 +133,25 @@ export const addWarningUpdate = async (req, res) => {
     warning.updates.push(updateData);
     const updatedWarning = await warning.save();
 
+    notificationController.broadcast(
+      {
+        type: "WARNING_UPDATE",
+        warningId: warningId,
+        title: warning.title,
+        update: update_text,
+        severity_change: severity_change,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
     res.status(200).json(updatedWarning);
   } catch (error) {
-    console.error('Error in addWarningUpdate:', error);
+    console.error("Error in addWarningUpdate:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Add response action to warning
 export const addResponseAction = async (req, res) => {
   try {
     const { action_type, description } = req.body;
@@ -172,6 +186,18 @@ export const addResponseAction = async (req, res) => {
     warning.response_actions.push(actionData);
     const updatedWarning = await warning.save();
 
+    notificationController.broadcast(
+      {
+        type: "RESPONSE_ACTION",
+        warningId: warningId,
+        title: warning.title,
+        action_type: action_type,
+        description: description,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
     await createSystemLog(
       user._id,
       "ADD_WARNING_ACTION",
@@ -189,7 +215,6 @@ export const addResponseAction = async (req, res) => {
   }
 };
 
-// Update response action status
 export const updateActionStatus = async (req, res) => {
   try {
     const { actionId } = req.params;
@@ -209,6 +234,18 @@ export const updateActionStatus = async (req, res) => {
 
     action.status = status;
     const updatedWarning = await warning.save();
+    
+    notificationController.broadcast(
+      {
+        type: "UPDATE_ACTION",
+        warningId: warningId,
+        title: warning.title,
+        action_type: action_type,
+        description: description,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
 
     await createSystemLog(
       user._id,
@@ -228,7 +265,6 @@ export const updateActionStatus = async (req, res) => {
   }
 };
 
-// Resolve warning
 export const resolveWarning = async (req, res) => {
   try {
     const { resolution_notes } = req.body;
@@ -253,6 +289,17 @@ export const resolveWarning = async (req, res) => {
 
     const updatedWarning = await warning.save();
 
+    notificationController.broadcast(
+      {
+        type: "WARNING_RESOLVED",
+        warningId: warningId,
+        title: warning.title,
+        resolution_notes: resolution_notes,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
     await createSystemLog(user._id, "RESOLVE_WARNING", "warning", warning._id, {
       message: `Warning resolved by ${user.name}`,
       resolution_notes,
@@ -264,7 +311,6 @@ export const resolveWarning = async (req, res) => {
   }
 };
 
-// Get warnings with filters
 export const getWarnings = async (req, res) => {
   try {
     const {
@@ -327,7 +373,6 @@ export const getWarnings = async (req, res) => {
   }
 };
 
-// Get warning by ID
 export const getWarningById = async (req, res) => {
   try {
     const warning = await Warning.findById(req.params.id)
@@ -349,7 +394,6 @@ export const getWarningById = async (req, res) => {
   }
 };
 
-// Get active warnings for public feed
 export const getActiveWarnings = async (req, res) => {
   try {
     const warnings = await Warning.find({
@@ -369,3 +413,62 @@ export const getActiveWarnings = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getWarningsByLocation = async (req, res) => {
+  try {
+    const { latitude, longitude, radius = 50 } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        error: "Latitude and longitude are required",
+      });
+    }
+
+    const warnings = await Warning.find({
+      status: { $in: ["active", "monitoring"] },
+    }).lean();
+
+    const nearbyWarnings = warnings.filter((warning) => {
+      return warning.affected_locations.some((location) =>
+        isWithinRadius(
+          { latitude, longitude },
+          {
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+          },
+          radius,
+        ),
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      data: nearbyWarnings,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+function isWithinRadius(point1, point2, radius) {
+  const R = 6371; // Earth's radius in kilometers
+  const lat1 = parseFloat(point1.latitude);
+  const lon1 = parseFloat(point1.longitude);
+  const lat2 = parseFloat(point2.latitude);
+  const lon2 = parseFloat(point2.longitude);
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance <= radius;
+}

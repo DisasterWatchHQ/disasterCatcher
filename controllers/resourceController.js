@@ -19,7 +19,6 @@ export const createResource = async (req, res) => {
       emergency_level,
     } = req.body;
 
-    // Create base resource data
     const resourceData = {
       name,
       category,
@@ -31,7 +30,6 @@ export const createResource = async (req, res) => {
       metadata: metadata || {},
     };
 
-    // Add category-specific fields
     if (category === "facility") {
       let locationData = {
         type: location.type,

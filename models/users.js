@@ -88,7 +88,6 @@ userSchema.index(
   { "location.latitude": 1, "location.longitude": 1 },
   { sparse: true },
 );
-// userSchema.index({ workId: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 export default User;
