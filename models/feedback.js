@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 
-// Define the schema for the Feedback collection
 const feedbackSchema = new Schema(
   {
     user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -25,7 +24,6 @@ const feedbackSchema = new Schema(
   { timestamps: true },
 );
 
-// Transform function for cleaner output
 feedbackSchema.set("toJSON", {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
@@ -34,6 +32,5 @@ feedbackSchema.set("toJSON", {
   },
 });
 
-// Model creation
 const Feedback = mongoose.model("Feedback", feedbackSchema);
 export default Feedback;

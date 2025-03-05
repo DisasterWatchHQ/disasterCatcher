@@ -112,7 +112,6 @@ const resourceSchema = new Schema(
     added_by: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      // required: true,
     },
     metadata: {
       type: Schema.Types.Mixed,
@@ -175,7 +174,6 @@ const resourceSchema = new Schema(
   },
 );
 
-// resourceSchema.index({ "location.coordinates": "2dsphere" });
 resourceSchema.index({ category: 1, type: 1 });
 resourceSchema.index({ tags: 1 });
 resourceSchema.index({ status: 1 });
@@ -241,7 +239,6 @@ resourceSchema.set("toJSON", {
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.__v;
-    // Format dates
     if (ret.last_verified) {
       ret.last_verified = ret.last_verified.toISOString();
     }

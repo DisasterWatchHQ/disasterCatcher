@@ -17,15 +17,12 @@ import {
 
 const router = express.Router();
 
-// Public routes
 router.get("/active", getActiveWarnings);
 router.get("/", getWarnings);
 router.get("/:id", getWarningById);
 
-// Protected routes - require authentication
 router.use(protectRoute, verifyToken);
 
-// Routes for verified users only
 router.use(verifyVerifiedUser);
 router.post("/", createWarning);
 router.post("/:id/updates", addWarningUpdate);

@@ -8,10 +8,10 @@ export const createFeedback = async (req, res) => {
     }
 
     const newFeedback = await Feedback.create({
-      user_id: req.user.id, // Get user ID from authenticated request
+      user_id: req.user.id,
       feedback_type: req.body.feedback_type,
       message: req.body.message,
-      status: "pending", // Default status for new feedback
+      status: "pending",
     });
 
     const populatedFeedback = await newFeedback.populate(
@@ -35,13 +35,11 @@ export const getFeedbacks = async (req, res) => {
       page = 1,
     } = req.query;
 
-    // Build query
     const query = {};
 
     if (feedback_type) query.feedback_type = feedback_type;
     if (status) query.status = status;
 
-    // Date range filter
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -72,7 +70,6 @@ export const getFeedbackById = async (req, res) => {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Check if user is authorized to view this feedback
     if (
       req.user.role !== "admin" &&
       feedback.user_id._id.toString() !== req.user.id
@@ -90,13 +87,11 @@ export const getFeedbackById = async (req, res) => {
 
 export const updateFeedback = async (req, res) => {
   try {
-    // Get the feedback first to check if it exists
     const feedback = await Feedback.findById(req.params.id);
     if (!feedback) {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Check if user is admin (using your existing middleware structure)
     if (!req.user || req.user.type !== "admin") {
       return res
         .status(403)
@@ -133,7 +128,6 @@ export const deleteFeedback = async (req, res) => {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Only admin or the feedback owner can delete
     if (!req.user || req.user.type !== "admin") {
       return res
         .status(403)
@@ -142,7 +136,6 @@ export const deleteFeedback = async (req, res) => {
 
     await Feedback.findByIdAndDelete(req.params.id);
 
-    // Log deletion if done by admin
     if (req.user.role === "admin") {
       await createSystemLog(
         req.user.id,
@@ -162,7 +155,6 @@ export const deleteFeedback = async (req, res) => {
   }
 };
 
-// Get user's own feedback
 export const getMyFeedback = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ user_id: req.user.id }).sort({

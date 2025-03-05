@@ -50,7 +50,6 @@ const adminLogSchema = new Schema(
   },
 );
 
-// Indexes
 adminLogSchema.index({ admin_id: 1 });
 adminLogSchema.index({ action: 1 });
 adminLogSchema.index({ createdAt: -1 });

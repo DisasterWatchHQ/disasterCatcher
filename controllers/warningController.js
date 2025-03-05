@@ -2,7 +2,6 @@ import Warning from "../models/warning.js";
 import { createSystemLog } from "./adminLogsController.js";
 import { notificationController } from "./notificationController.js";
 
-// Create a new warning
 export const createWarning = async (req, res) => {
   try {
     const {
@@ -33,7 +32,6 @@ export const createWarning = async (req, res) => {
       });
     }
 
-    // Validate locations
     const invalidLocations = affected_locations.filter(
       (location) =>
         !location.address?.city ||
@@ -91,23 +89,12 @@ export const createWarning = async (req, res) => {
       affected_locations[0],
     );
 
-    // await createSystemLog(
-    //   created_by,
-    //   "CREATE_WARNING",
-    //   "warning",
-    //   newWarning._id,
-    //   {
-    //     message: `New warning created with ID ${newWarning._id}`,
-    //   },
-    // );
-
     res.status(201).json(newWarning);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Add update to existing warning
 export const addWarningUpdate = async (req, res) => {
   try {
     const { update_text, severity_change } = req.body;
@@ -165,7 +152,6 @@ export const addWarningUpdate = async (req, res) => {
   }
 };
 
-// Add response action to warning
 export const addResponseAction = async (req, res) => {
   try {
     const { action_type, description } = req.body;
@@ -229,7 +215,6 @@ export const addResponseAction = async (req, res) => {
   }
 };
 
-// Update response action status
 export const updateActionStatus = async (req, res) => {
   try {
     const { actionId } = req.params;
@@ -280,7 +265,6 @@ export const updateActionStatus = async (req, res) => {
   }
 };
 
-// Resolve warning
 export const resolveWarning = async (req, res) => {
   try {
     const { resolution_notes } = req.body;
@@ -327,7 +311,6 @@ export const resolveWarning = async (req, res) => {
   }
 };
 
-// Get warnings with filters
 export const getWarnings = async (req, res) => {
   try {
     const {
@@ -390,7 +373,6 @@ export const getWarnings = async (req, res) => {
   }
 };
 
-// Get warning by ID
 export const getWarningById = async (req, res) => {
   try {
     const warning = await Warning.findById(req.params.id)
@@ -412,7 +394,6 @@ export const getWarningById = async (req, res) => {
   }
 };
 
-// Get active warnings for public feed
 export const getActiveWarnings = async (req, res) => {
   try {
     const warnings = await Warning.find({
@@ -447,7 +428,6 @@ export const getWarningsByLocation = async (req, res) => {
       status: { $in: ["active", "monitoring"] },
     }).lean();
 
-    // Filter warnings based on location
     const nearbyWarnings = warnings.filter((warning) => {
       return warning.affected_locations.some((location) =>
         isWithinRadius(
@@ -470,7 +450,6 @@ export const getWarningsByLocation = async (req, res) => {
   }
 };
 
-// Helper function for calculating distance
 function isWithinRadius(point1, point2, radius) {
   const R = 6371; // Earth's radius in kilometers
   const lat1 = parseFloat(point1.latitude);
