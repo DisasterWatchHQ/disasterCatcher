@@ -1,171 +1,71 @@
-import Notification from "../models/notifications.js";
-import { sendPushNotification } from '../services/notificationService.js';
+let connections = [];
 
-export const createSystemNotification = async (userId, message, type, priority = "medium") => {
-  try {
-    const notification = await Notification.create({
-      user_id: userId,
-      message,
-      type,
-      priority,
-      source: "system",
+export const notificationController = {
+  // Subscribe to notifications
+  subscribe: (req, res) => {
+    const { latitude, longitude } = req.query;
+
+    // Set headers for SSE
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
     });
 
-    const existingNotification = await Notification.findOne({ 
-      user_id: userId, 
-      pushToken: { $exists: true } 
-    });
+    // Store connection with location info
+    const connection = {
+      res,
+      location: { latitude, longitude }
+    };
     
-    if (existingNotification?.pushToken) {
-      await sendPushNotification(existingNotification.pushToken, notification);
-    }
+    connections.push(connection);
 
-    return notification;
-  } catch (error) {
-    console.error("Error creating system notification:", error);
-    return null;
-  }
-};
-
-export const registerPushToken = async (req, res) => {
-  try {
-    const { pushToken } = req.body;
-    const userId = req.user.id;
-
-    await Notification.updateMany(
-      { user_id: userId },
-      { pushToken }
-    );
-
-    res.status(200).json({ message: 'Push token registered successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const createAlertNotification = async (userId, alertData) => {
-  try {
-    const notification = await Notification.create({
-      user_id: userId,
-      message: alertData.message,
-      type: "alert",
-      priority: alertData.priority || "high",
-      source: "alert_system",
-      metadata: new Map(Object.entries(alertData)),
+    // Remove connection when client disconnects
+    req.on('close', () => {
+      connections = connections.filter(conn => conn !== connection);
     });
+  },
 
-    const existingNotification = await Notification.findOne({ 
-      user_id: userId, 
-      pushToken: { $exists: true } 
+  // Send notification to all connected clients
+  broadcast: (message, location = null, radius = 50) => {
+    connections.forEach(connection => {
+      if (location) {
+        // If location is provided, only send to nearby users
+        if (isWithinRadius(connection.location, location, radius)) {
+          connection.res.write(`data: ${JSON.stringify(message)}\n\n`);
+        }
+      } else {
+        // If no location, send to all
+        connection.res.write(`data: ${JSON.stringify(message)}\n\n`);
+      }
     });
-    
-    if (existingNotification?.pushToken) {
-      await sendPushNotification(existingNotification.pushToken, notification);
-    }
-
-    return notification;
-  } catch (error) {
-    console.error("Error creating alert notification:", error);
-    return null;
   }
 };
 
-export const getMyNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.find({ user_id: req.user.id })
-      .sort({ createdAt: -1 })
-      .populate("user_id", "name email");
+// Helper function to check if a point is within radius (km)
+function isWithinRadius(point1, point2, radius) {
+  if (!point1 || !point2) return false;
+  
+  const lat1 = parseFloat(point1.latitude);
+  const lon1 = parseFloat(point1.longitude);
+  const lat2 = parseFloat(point2.latitude);
+  const lon2 = parseFloat(point2.longitude);
 
-    res.status(200).json(notifications);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  
+  return distance <= radius;
+}
 
-export const getNotificationById = async (req, res) => {
-  try {
-    const notification = await Notification.findOne({
-      _id: req.params.id,
-      user_id: req.user.id,
-    });
-
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-
-    res.status(200).json(notification);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const markAsRead = async (req, res) => {
-  try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, user_id: req.user.id },
-      { status: "read" },
-      { new: true },
-    );
-
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-
-    res.status(200).json(notification);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-export const markAllAsRead = async (req, res) => {
-  try {
-    await Notification.updateMany(
-      { user_id: req.user.id, status: "unread" },
-      { status: "read" },
-    );
-
-    res.status(200).json({ message: "All notifications marked as read" });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-export const deleteNotification = async (req, res) => {
-  try {
-    const notification = await Notification.findOneAndDelete({
-      _id: req.params.id,
-      user_id: req.user.id,
-    });
-
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-
-    res.status(200).json({ message: "Notification deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const removeNotification = async (req, res) => {
-  try {
-    const { type, status, priority } = req.query;
-    const query = { user_id: req.user.id };
-
-    if (type) query.type = type;
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
-
-    const deletedNotifications = await Notification.deleteMany(query);
-
-    if (deletedNotifications.deletedCount === 0) {
-      return res.status(404).json({ message: "No matching notifications found to remove" });
-    }
-
-    res.status(200).json({
-      message: `${deletedNotifications.deletedCount} notifications removed successfully`,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+function toRad(value) {
+  return value * Math.PI / 180;
+}

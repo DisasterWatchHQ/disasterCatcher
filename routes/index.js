@@ -19,7 +19,7 @@ router.use("/userReport", userReportRoutes);
 router.use("/feedback", feedbackRoutes);
 
 // router.use("/alerts", alertsRoute);
-// router.use("/notifications", notificationRoutes);
+router.use("/notifications", notificationRoutes);
 // router.use("/location", locationRoutes);
 
 router.use("/warning", warningRoutes);
