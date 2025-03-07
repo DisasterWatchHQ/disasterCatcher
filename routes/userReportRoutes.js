@@ -18,12 +18,12 @@ import {
   verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
-import upload from '../middlewares/upload.js';
+// import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
 router.get("/feed", getPublicFeed);
-router.post("/",upload.array('images', 3), createUserReport);
+// router.post("/",upload.array('images', 3), createUserReport);
 router.get("/public", getUserReports);
 router.get('/reports', getFeedReports);
 router.get('/feedstats', getFeedStats);
@@ -34,8 +34,6 @@ router.use(protectRoute, verifyToken);
 router.get("/my-reports", getReportsByUser);
 router.get("/stats/verification", getVerificationStats);
 router.get("/stats/analytics", getReportAnalytics);
-
-router.use(verifyVerifiedUser);
 
 router.post("/:id/verify", verifyReport);
 router.post("/:id/dismiss", dismissReport);
