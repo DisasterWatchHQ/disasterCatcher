@@ -1,9 +1,23 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const locationSchema = new Schema({
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
+});
+
+const userPreferencesSchema = new Schema({
+  notifications: {
+    push: { type: Boolean, default: true },
+    email: { type: Boolean, default: true },
+    sms: { type: Boolean, default: false },
+    radius: { type: Number, default: 50 }, // km
+  },
+  theme: {
+    mode: { type: String, enum: ["light", "dark", "system"], default: "system" },
+  },
+  language: { type: String, default: "en" },
 });
 
 const userSchema = new Schema(
@@ -42,13 +56,21 @@ const userSchema = new Schema(
         message: "{VALUE} is not a valid department",
       },
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
+    role: {
+      type: String,
+      enum: ["public", "official"],
+      default: "public",
     },
     lastLogin: {
       type: Date,
     },
+    preferences: {
+      type: userPreferencesSchema,
+      default: () => ({}),
+    },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    pushToken: String,
   },
   {
     timestamps: true,
@@ -56,6 +78,17 @@ const userSchema = new Schema(
     toObject: { virtuals: true },
   },
 );
+
+// Password reset methods
+userSchema.methods.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return resetToken;
+};
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -80,6 +113,8 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   delete userObject.password;
+  delete userObject.passwordResetToken;
+  delete userObject.passwordResetExpires;
   delete userObject.__v;
   return userObject;
 };
