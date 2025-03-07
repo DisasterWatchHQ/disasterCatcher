@@ -8,11 +8,11 @@ import warningRoutes from "./warningRoutes.js";
 
 const router = express.Router();
 
-router.use("/user", userRoutes);
+router.use("/users", userRoutes);
 router.use("/resources", resourceRoutes);
-router.use("/userReport", userReportRoutes);
+router.use("/reports", userReportRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/notifications", notificationRoutes);
-router.use("/warning", warningRoutes);
+router.use("/warnings", warningRoutes);
 
 export default router;
