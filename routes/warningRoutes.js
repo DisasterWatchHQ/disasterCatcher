@@ -7,30 +7,27 @@ import {
   resolveWarning,
   getWarnings,
   getWarningById,
-  getActiveWarnings
+  getActiveWarnings,
+  getWarningsByLocation,
+  updateWarning
 } from "../controllers/warningController.js";
-import {
-  protectRoute,
-  verifyVerifiedUser,
-  verifyToken
-} from "../middlewares/authMiddleware.js";
+import { authenticate } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 // Public routes
 router.get("/active", getActiveWarnings);
+router.get("/location", getWarningsByLocation);
 router.get("/", getWarnings);
 router.get("/:id", getWarningById);
 
-// Protected routes - require authentication
-router.use(protectRoute, verifyToken);
-
-// Routes for verified users only
-router.use(verifyVerifiedUser);
+// Protected routes
+router.use(authenticate);
 router.post("/", createWarning);
 router.post("/:id/updates", addWarningUpdate);
+router.post("/:id/resolve", resolveWarning);
 router.post("/:id/actions", addResponseAction);
 router.patch("/:id/actions/:actionId", updateActionStatus);
-router.post("/:id/resolve", resolveWarning);
+router.patch("/:id", updateWarning);
 
 export default router;

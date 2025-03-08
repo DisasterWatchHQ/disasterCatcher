@@ -1,8 +1,8 @@
 import Warning from "../models/warning.js";
 import { createSystemLog } from "./adminLogsController.js";
+import { notificationController } from "./notificationController.js";
 
-// Create a new warning
-export const createWarning = async (req, res) => {
+const createWarning = async (req, res) => {
   try {
     const {
       title,
@@ -10,14 +10,7 @@ export const createWarning = async (req, res) => {
       description,
       affected_locations,
       severity,
-      created_by,
     } = req.body;
-
-    if (!created_by) {
-      return res.status(401).json({
-        error: "User ID is required to create warnings",
-      });
-    }
 
     if (
       !title ||
@@ -32,7 +25,6 @@ export const createWarning = async (req, res) => {
       });
     }
 
-    // Validate locations
     const invalidLocations = affected_locations.filter(
       (location) =>
         !location.address?.city ||
@@ -73,29 +65,32 @@ export const createWarning = async (req, res) => {
 
     const warningData = {
       ...req.body,
+      created_by: req.user._id,
       status: "active",
     };
 
     const newWarning = await Warning.create(warningData);
 
-    // await createSystemLog(
-    //   created_by,
-    //   "CREATE_WARNING",
-    //   "warning",
-    //   newWarning._id,
-    //   {
-    //     message: `New warning created with ID ${newWarning._id}`,
-    //   },
-    // );
+    notificationController.broadcast(
+      {
+        type: "NEW_WARNING",
+        title: title,
+        severity: severity,
+        disaster_category: disaster_category,
+        affected_locations: affected_locations,
+        warningId: newWarning._id,
+      },
+      affected_locations[0],
+    );
 
     res.status(201).json(newWarning);
   } catch (error) {
+    console.error("Error in createWarning:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Add update to existing warning
-export const addWarningUpdate = async (req, res) => {
+const addWarningUpdate = async (req, res) => {
   try {
     const { update_text, severity_change } = req.body;
     const warningId = req.params.id;
@@ -119,10 +114,14 @@ export const addWarningUpdate = async (req, res) => {
 
     const updateData = {
       update_text,
-      updated_at: new Date()
+      updated_at: new Date(),
+      updated_by: req.user._id,
     };
 
-    if (severity_change && ['low', 'medium', 'high', 'critical'].includes(severity_change)) {
+    if (
+      severity_change &&
+      ["low", "medium", "high", "critical"].includes(severity_change)
+    ) {
       updateData.severity_change = severity_change;
       warning.severity = severity_change;
     }
@@ -130,19 +129,29 @@ export const addWarningUpdate = async (req, res) => {
     warning.updates.push(updateData);
     const updatedWarning = await warning.save();
 
+    notificationController.broadcast(
+      {
+        type: "WARNING_UPDATE",
+        warningId: warningId,
+        title: warning.title,
+        update: update_text,
+        severity_change: severity_change,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
     res.status(200).json(updatedWarning);
   } catch (error) {
-    console.error('Error in addWarningUpdate:', error);
+    console.error("Error in addWarningUpdate:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Add response action to warning
-export const addResponseAction = async (req, res) => {
+const addResponseAction = async (req, res) => {
   try {
     const { action_type, description } = req.body;
     const warningId = req.params.id;
-    const user = req.user;
 
     if (!action_type || !description) {
       return res.status(400).json({
@@ -164,7 +173,7 @@ export const addResponseAction = async (req, res) => {
     const actionData = {
       action_type,
       description,
-      performed_by: user._id,
+      performed_by: req.user._id,
       performed_at: new Date(),
       status: "planned",
     };
@@ -172,30 +181,54 @@ export const addResponseAction = async (req, res) => {
     warning.response_actions.push(actionData);
     const updatedWarning = await warning.save();
 
+    notificationController.broadcast(
+      {
+        type: "RESPONSE_ACTION",
+        warningId: warningId,
+        title: warning.title,
+        action_type: action_type,
+        description: description,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
     await createSystemLog(
-      user._id,
+      req.user._id,
       "ADD_WARNING_ACTION",
       "warning",
       warning._id,
       {
-        message: `Response action added by ${user.name}`,
+        message: `Response action added by ${req.user.name}`,
         action_details: actionData,
       },
     );
 
     res.status(200).json(updatedWarning);
   } catch (error) {
+    console.error("Error in addResponseAction:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Update response action status
-export const updateActionStatus = async (req, res) => {
+const updateActionStatus = async (req, res) => {
   try {
     const { actionId } = req.params;
     const { status } = req.body;
     const warningId = req.params.id;
-    const user = req.user;
+
+    if (!status) {
+      return res.status(400).json({
+        error: "Status is required",
+      });
+    }
+
+    const validStatuses = ["planned", "in_progress", "completed", "cancelled"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `${status} is not a valid enum value`,
+      });
+    }
 
     const warning = await Warning.findById(warningId);
     if (!warning) {
@@ -209,31 +242,42 @@ export const updateActionStatus = async (req, res) => {
 
     action.status = status;
     const updatedWarning = await warning.save();
+    
+    notificationController.broadcast(
+      {
+        type: "UPDATE_ACTION",
+        warningId: warningId,
+        title: warning.title,
+        actionId: actionId,
+        status: status,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
 
     await createSystemLog(
-      user._id,
+      req.user._id,
       "UPDATE_ACTION_STATUS",
       "warning",
       warning._id,
       {
-        message: `Action status updated by ${user.name}`,
-        action_id: actionId,
-        new_status: status,
+        message: `Action status updated to ${status} by ${req.user.name}`,
+        actionId: actionId,
+        status: status,
       },
     );
 
     res.status(200).json(updatedWarning);
   } catch (error) {
+    console.error("Error in updateActionStatus:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Resolve warning
-export const resolveWarning = async (req, res) => {
+const resolveWarning = async (req, res) => {
   try {
     const { resolution_notes } = req.body;
     const warningId = req.params.id;
-    const user = req.user;
 
     if (!resolution_notes) {
       return res.status(400).json({
@@ -247,25 +291,36 @@ export const resolveWarning = async (req, res) => {
     }
 
     warning.status = "resolved";
-    warning.resolved_by = user._id;
+    warning.resolved_by = req.user._id;
     warning.resolved_at = new Date();
     warning.resolution_notes = resolution_notes;
 
     const updatedWarning = await warning.save();
 
-    await createSystemLog(user._id, "RESOLVE_WARNING", "warning", warning._id, {
-      message: `Warning resolved by ${user.name}`,
+    notificationController.broadcast(
+      {
+        type: "WARNING_RESOLVED",
+        warningId: warningId,
+        title: warning.title,
+        resolution_notes: resolution_notes,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
+    await createSystemLog(req.user._id, "RESOLVE_WARNING", "warning", warning._id, {
+      message: `Warning resolved by ${req.user.name}`,
       resolution_notes,
     });
 
     res.status(200).json(updatedWarning);
   } catch (error) {
+    console.error("Error in resolveWarning:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get warnings with filters
-export const getWarnings = async (req, res) => {
+const getWarnings = async (req, res) => {
   try {
     const {
       disaster_category,
@@ -323,12 +378,12 @@ export const getWarnings = async (req, res) => {
       totalWarnings: total,
     });
   } catch (error) {
+    console.error("Error in getWarnings:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get warning by ID
-export const getWarningById = async (req, res) => {
+const getWarningById = async (req, res) => {
   try {
     const warning = await Warning.findById(req.params.id)
       .populate("created_by", "name workId associated_department")
@@ -345,12 +400,12 @@ export const getWarningById = async (req, res) => {
 
     res.status(200).json(warning);
   } catch (error) {
+    console.error("Error in getWarningById:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get active warnings for public feed
-export const getActiveWarnings = async (req, res) => {
+const getActiveWarnings = async (req, res) => {
   try {
     const warnings = await Warning.find({
       status: { $in: ["active", "monitoring"] },
@@ -366,6 +421,135 @@ export const getActiveWarnings = async (req, res) => {
       data: warnings,
     });
   } catch (error) {
+    console.error("Error in getActiveWarnings:", error);
     res.status(500).json({ error: error.message });
   }
+};
+
+const getWarningsByLocation = async (req, res) => {
+  try {
+    const { latitude, longitude, radius = 50 } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        error: "Latitude and longitude are required",
+      });
+    }
+
+    const warnings = await Warning.find({
+      status: { $in: ["active", "monitoring"] },
+    }).lean();
+
+    const nearbyWarnings = warnings.filter((warning) => {
+      return warning.affected_locations.some((location) =>
+        isWithinRadius(
+          { latitude, longitude },
+          {
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+          },
+          radius,
+        ),
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      data: nearbyWarnings,
+    });
+  } catch (error) {
+    console.error("Error in getWarningsByLocation:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+function isWithinRadius(point1, point2, radius) {
+  const R = 6371; // Earth's radius in kilometers
+  const lat1 = parseFloat(point1.latitude);
+  const lon1 = parseFloat(point1.longitude);
+  const lat2 = parseFloat(point2.latitude);
+  const lon2 = parseFloat(point2.longitude);
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance <= radius;
+}
+
+const updateWarning = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const warningId = req.params.id;
+
+    if (!status) {
+      return res.status(400).json({
+        error: "Status is required",
+      });
+    }
+
+    const validStatuses = ["active", "monitoring", "resolved", "archived"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: "Invalid status",
+      });
+    }
+
+    const warning = await Warning.findById(warningId);
+    if (!warning) {
+      return res.status(404).json({ error: "Warning not found" });
+    }
+
+    warning.status = status;
+    const updatedWarning = await warning.save();
+
+    notificationController.broadcast(
+      {
+        type: "WARNING_STATUS_UPDATE",
+        warningId: warningId,
+        title: warning.title,
+        status: status,
+        affected_locations: warning.affected_locations,
+      },
+      warning.affected_locations[0],
+    );
+
+    await createSystemLog(
+      req.user._id,
+      "UPDATE_WARNING_STATUS",
+      "warning",
+      warning._id,
+      {
+        message: `Warning status updated to ${status} by ${req.user.name}`,
+        status: status,
+      },
+    );
+
+    res.status(200).json(updatedWarning);
+  } catch (error) {
+    console.error("Error in updateWarning:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export {
+  createWarning,
+  addWarningUpdate,
+  addResponseAction,
+  updateActionStatus,
+  resolveWarning,
+  getWarnings,
+  getWarningById,
+  getActiveWarnings,
+  getWarningsByLocation,
+  updateWarning
 };

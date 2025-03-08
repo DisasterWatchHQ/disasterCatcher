@@ -5,24 +5,21 @@ import {
   getFeedbackById,
   updateFeedback,
   deleteFeedback,
-  getMyFeedback,
 } from "../controllers/feedbackController.js";
 import {
   protectRoute,
   verifyVerifiedUser,
-  verifyToken,
 } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(protectRoute, verifyToken);
-
+// Public routes
 router.post("/", createFeedback);
-router.get("/my-feedback", getMyFeedback);
+router.get("/", getFeedbacks);
+router.get("/:id", getFeedbackById);
 
-router.delete("/:id", verifyVerifiedUser, deleteFeedback);
-router.get("/:id", verifyVerifiedUser, getFeedbackById);
-router.get("/", verifyVerifiedUser, getFeedbacks);
-router.put("/:id", verifyVerifiedUser, updateFeedback);
+// Admin only routes
+router.put("/:id", protectRoute, verifyVerifiedUser, updateFeedback);
+router.delete("/:id", protectRoute, verifyVerifiedUser, deleteFeedback);
 
 export default router;

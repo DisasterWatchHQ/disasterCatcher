@@ -3,22 +3,14 @@ import { createSystemLog } from "./adminLogsController.js";
 
 export const createFeedback = async (req, res) => {
   try {
-    if (req.user.type === "admin") {
-      return res.status(403).json({ message: "Admins cannot create feedback" });
-    }
-
     const newFeedback = await Feedback.create({
-      user_id: req.user.id, // Get user ID from authenticated request
+      user_id: req.user?.id, // Optional user ID if logged in
       feedback_type: req.body.feedback_type,
       message: req.body.message,
-      status: "pending", // Default status for new feedback
+      status: "pending",
     });
 
-    const populatedFeedback = await newFeedback.populate(
-      "user_id",
-      "name email",
-    );
-    res.status(201).json(populatedFeedback);
+    res.status(201).json(newFeedback);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -35,13 +27,11 @@ export const getFeedbacks = async (req, res) => {
       page = 1,
     } = req.query;
 
-    // Build query
     const query = {};
 
     if (feedback_type) query.feedback_type = feedback_type;
     if (status) query.status = status;
 
-    // Date range filter
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -49,11 +39,15 @@ export const getFeedbacks = async (req, res) => {
     }
 
     const feedbacks = await Feedback.find(query)
-      .populate("user_id", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Feedback.countDocuments(query);
 
     res.status(200).json({
       feedbacks,
+      total,
       success: true,
     });
   } catch (error) {
@@ -63,23 +57,10 @@ export const getFeedbacks = async (req, res) => {
 
 export const getFeedbackById = async (req, res) => {
   try {
-    const feedback = await Feedback.findById(req.params.id).populate(
-      "user_id",
-      "name email",
-    );
+    const feedback = await Feedback.findById(req.params.id);
 
     if (!feedback) {
       return res.status(404).json({ message: "Feedback not found" });
-    }
-
-    // Check if user is authorized to view this feedback
-    if (
-      req.user.role !== "admin" &&
-      feedback.user_id._id.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to view this feedback" });
     }
 
     res.status(200).json(feedback);
@@ -90,14 +71,12 @@ export const getFeedbackById = async (req, res) => {
 
 export const updateFeedback = async (req, res) => {
   try {
-    // Get the feedback first to check if it exists
     const feedback = await Feedback.findById(req.params.id);
     if (!feedback) {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Check if user is admin (using your existing middleware structure)
-    if (!req.user || req.user.type !== "admin") {
+    if (!req.user || req.user.role !== "official") {
       return res
         .status(403)
         .json({ message: "Only admins can update feedback" });
@@ -116,8 +95,8 @@ export const updateFeedback = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      },
-    ).populate("user_id", "name email");
+      }
+    );
 
     res.status(200).json(updatedFeedback);
   } catch (error) {
@@ -133,8 +112,7 @@ export const deleteFeedback = async (req, res) => {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Only admin or the feedback owner can delete
-    if (!req.user || req.user.type !== "admin") {
+    if (!req.user || req.user.role !== "official") {
       return res
         .status(403)
         .json({ message: "Only admins can delete feedback" });
@@ -142,19 +120,16 @@ export const deleteFeedback = async (req, res) => {
 
     await Feedback.findByIdAndDelete(req.params.id);
 
-    // Log deletion if done by admin
-    if (req.user.role === "admin") {
-      await createSystemLog(
-        req.user.id,
-        "DELETE_FEEDBACK",
-        "feedback",
-        feedback._id,
-        {
-          previous_state: feedback.toObject(),
-          message: `Feedback from user ${feedback.user_id} was deleted`,
-        },
-      );
-    }
+    await createSystemLog(
+      req.user.id,
+      "DELETE_FEEDBACK",
+      "feedback",
+      feedback._id,
+      {
+        previous_state: feedback.toObject(),
+        message: `Feedback was deleted`,
+      }
+    );
 
     res.status(200).json({ message: "Feedback deleted successfully" });
   } catch (error) {
@@ -162,12 +137,13 @@ export const deleteFeedback = async (req, res) => {
   }
 };
 
-// Get user's own feedback
 export const getMyFeedback = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find({ user_id: req.user.id }).sort({
-      createdAt: -1,
-    });
+    const feedbacks = await Feedback.find({ user_id: req.user.id })
+      .populate("user_id", "name email")
+      .sort({
+        createdAt: -1,
+      });
     res.status(200).json(feedbacks);
   } catch (error) {
     res.status(500).json({ error: error.message });

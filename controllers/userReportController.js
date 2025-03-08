@@ -7,22 +7,10 @@ export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
 
-    // Parse location if it's a string
-    let locationData;
-    try {
-      locationData =
-        typeof location === "string" ? JSON.parse(location) : location;
-    } catch (error) {
-      return res.status(400).json({
-        error: "Invalid location data format",
-      });
-    }
-
-    // Validate location structure
     if (
-      !locationData?.address?.city ||
-      !locationData?.address?.district ||
-      !locationData?.address?.province
+      !location?.address?.city ||
+      !location?.address?.district ||
+      !location?.address?.province
     ) {
       return res.status(400).json({
         error:
@@ -30,18 +18,12 @@ export const createUserReport = async (req, res) => {
       });
     }
 
-    // Get image paths from uploaded files
-    const images = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
-
-    // Create report data
     const reportData = {
       title,
       disaster_category,
       description,
-      location: locationData,
-      images,
+      location,
+      reporter_type: "anonymous", // or handle authentication if implemented
     };
 
     const newReport = await UserReports.create(reportData);
@@ -57,12 +39,6 @@ export const verifyReport = async (req, res) => {
     const { severity, notes } = req.body;
     const reportId = req.params.id;
     const verifyingUser = req.user;
-
-    if (!verifyingUser.isVerified) {
-      return res.status(403).json({
-        error: "Only verified users can verify reports",
-      });
-    }
 
     const report = await UserReports.findById(reportId);
     if (!report) {
@@ -109,12 +85,6 @@ export const dismissReport = async (req, res) => {
     const { notes } = req.body;
     const reportId = req.params.id;
     const user = req.user;
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        error: "Only verified users can dismiss reports",
-      });
-    }
 
     const report = await UserReports.findById(reportId);
     if (!report) {
@@ -309,19 +279,13 @@ export const getVerificationStats = async (req, res) => {
     today.setHours(0, 0, 0, 0);
 
     const stats = await Promise.all([
-      // Pending reports count
       UserReports.countDocuments({ verification_status: "pending" }),
-
-      // Verified today count
       UserReports.countDocuments({
         verification_status: "verified",
         "verification.verified_at": { $gte: today },
       }),
 
-      // Active incidents count
       Warning.countDocuments({ status: "active" }),
-
-      // Average verification time
       UserReports.aggregate([
         {
           $match: {
@@ -334,7 +298,7 @@ export const getVerificationStats = async (req, res) => {
             _id: null,
             avgTime: {
               $avg: {
-                $divide: ["$verification.verification_time", 60], // Convert minutes to hours
+                $divide: ["$verification.verification_time", 60],
               },
             },
           },
@@ -354,7 +318,6 @@ export const getVerificationStats = async (req, res) => {
   }
 };
 
-// Get report analytics
 export const getReportAnalytics = async (req, res) => {
   try {
     const weekAgo = new Date();
@@ -443,7 +406,6 @@ export const getReportAnalytics = async (req, res) => {
       },
     ]);
 
-    // Format weekly trends data
     const trendsMap = {};
     analytics[0].weeklyTrends.forEach((item) => {
       if (!trendsMap[item.date]) {
@@ -465,7 +427,6 @@ export const getReportAnalytics = async (req, res) => {
   }
 };
 
-// Get public feed of verified reports
 export const getPublicFeed = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -476,7 +437,7 @@ export const getPublicFeed = async (req, res) => {
       .sort({ "verification.verified_at": -1 })
       .limit(parseInt(limit))
       .skip((page - 1) * parseInt(limit))
-      .select("-reporter"); // Exclude sensitive info
+      .select("-reporter");
 
     const total = await UserReports.countDocuments({
       verification_status: "verified",
@@ -493,7 +454,6 @@ export const getPublicFeed = async (req, res) => {
   }
 };
 
-// Get feed reports with filters
 export const getFeedReports = async (req, res) => {
   try {
     const {
@@ -501,13 +461,11 @@ export const getFeedReports = async (req, res) => {
       limit = 10,
       disaster_category,
       verified_only,
-      district, // Add district parameter
+      district,
     } = req.query;
 
-    // Build query object
     const query = {};
 
-    // Add filters
     if (verified_only === "true") {
       query.verification_status = "verified";
     }
@@ -516,19 +474,16 @@ export const getFeedReports = async (req, res) => {
       query.disaster_category = disaster_category;
     }
 
-    // Add district filter
     if (district) {
       query["location.address.district"] = district;
     }
 
-    // Get reports
     const reports = await UserReports.find(query)
       .sort({ date_time: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .lean();
 
-    // Get total count for pagination
     const total = await UserReports.countDocuments(query);
 
     res.status(200).json({
@@ -540,7 +495,7 @@ export const getFeedReports = async (req, res) => {
           description: report.description,
           disaster_category: report.disaster_category,
           location: report.location,
-          district: report.location.address.district, // Include district in response
+          district: report.location.address.district,
           date_time: report.date_time,
           images: report.images,
           verification_status: report.verification_status,
@@ -564,10 +519,8 @@ export const getFeedReports = async (req, res) => {
   }
 };
 
-// Get feed statistics
 export const getFeedStats = async (req, res) => {
   try {
-    // Get disaster type distribution from reports
     const reportStats = await UserReports.aggregate([
       {
         $group: {
@@ -582,7 +535,6 @@ export const getFeedStats = async (req, res) => {
       },
     ]);
 
-    // Get active warnings distribution
     const warningStats = await Warning.aggregate([
       {
         $group: {
@@ -621,7 +573,6 @@ export const getFeedStats = async (req, res) => {
   }
 };
 
-// Get recent updates for live feed
 export const getFeedUpdates = async (req, res) => {
   try {
     const { minutes = 30 } = req.query;
@@ -637,7 +588,6 @@ export const getFeedUpdates = async (req, res) => {
       )
       .lean();
 
-    // Modified response structure to match frontend expectations
     res.status(200).json({
       success: true,
       data: {

@@ -8,7 +8,6 @@ export const createSystemLog = async (
   details,
 ) => {
   try {
-    // Map targetType to match enum values
     const mappedTargetType = {
       user_report: "user_report",
       incident_report: "incident_report",
@@ -22,7 +21,6 @@ export const createSystemLog = async (
       return null;
     }
 
-    // Convert details to Map if it's not already
     const detailsMap =
       details instanceof Map ? details : new Map(Object.entries(details || {}));
 
@@ -59,7 +57,6 @@ export const getAdminLogs = async (req, res) => {
     if (target_type) query.target_type = target_type;
     if (admin_id) query.admin_id = admin_id;
 
-    // Date range filter
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);

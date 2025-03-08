@@ -6,22 +6,34 @@ import {
   updateUser,
   deleteUser,
   authenticateUser,
-  changePassword,
+  forgotPassword,
+  resetPassword,
+  updatePreferences,
+  updatePushToken,
 } from "../controllers/userController.js";
-import { protectRoute, verifyToken } from "../middlewares/authMiddleware.js";
+import { authenticate, authorize } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/login", authenticateUser);
+// Public routes
 router.post("/register", createUser);
+router.post("/login", authenticateUser);
+router.post("/reset-password", resetPassword);
+router.post("/forgot-password", forgotPassword);
 
-// All routes below this middleware require authentication
-router.use(protectRoute, verifyToken);
+// Protected routes
+router.use(authenticate);
+
+// User preferences and push token
+router.patch("/preferences", updatePreferences);
+router.patch("/push-token", updatePushToken);
+
+// Admin only routes
+router.use(authorize("official"));
 
 router.get("/", getAllUsers);
 router.get("/:id", getUserById);
-router.put("/:id", updateUser);
+router.patch("/:id", updateUser);
 router.delete("/:id", deleteUser);
-router.post("/:id/changepassword", changePassword);
 
 export default router;
