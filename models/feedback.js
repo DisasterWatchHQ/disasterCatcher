@@ -2,26 +2,38 @@ import mongoose, { Schema } from "mongoose";
 
 const feedbackSchema = new Schema(
   {
-    user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user_id: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false
+    },
     feedback_type: {
       type: String,
       required: true,
-      enum: ["bug", "feature_request", "complaint", "suggestion", "other"],
+      enum: ["bug", "feature_request", "improvement", "other"],
     },
-    message: { type: String, required: true },
-    status: {
+    message: {
       type: String,
       required: true,
-      enum: ["pending", "in_progress", "resolved", "dismissed"],
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "in_progress", "resolved", "rejected"],
       default: "pending",
     },
     admin_response: {
       message: String,
-      responded_by: { type: Schema.Types.ObjectId, ref: "User" },
+      responded_by: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
       responded_at: Date,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
 
 feedbackSchema.set("toJSON", {

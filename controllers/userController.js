@@ -1,6 +1,9 @@
 import User from "../models/users.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import { notificationController } from "./notificationController.js";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -35,12 +38,11 @@ export const createUser = async (req, res) => {
       password,
       workId,
       associated_department,
-      isVerified: false, 
     });
 
     res.status(201).json({
       success: true,
-      message: "User created successfully. Awaiting verification.",
+      message: "User created successfully.",
       user,
     });
   } catch (error) {
@@ -56,12 +58,11 @@ export const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const { department, email, isVerified } = req.query;
+    const { department, email } = req.query;
 
     const query = {};
     if (department) query.associated_department = department;
     if (email) query.email = new RegExp(email, "i");
-    if (isVerified !== undefined) query.isVerified = isVerified === "true";
 
     const users = await User.find(query)
       .skip((page - 1) * limit)
@@ -197,14 +198,6 @@ export const authenticateUser = async (req, res) => {
       });
     }
 
-    // Holding this  because verification process need tobe implemented
-    // if (!user.isVerified) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Account not verified. Please wait for verification.",
-    //   });
-    // }
-
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -217,7 +210,7 @@ export const authenticateUser = async (req, res) => {
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id, isVerified: user.isVerified },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "24h" },
     );
@@ -238,7 +231,6 @@ export const authenticateUser = async (req, res) => {
         name: user.name,
         email: user.email,
         department: user.associated_department,
-        isVerified: user.isVerified,
       },
     });
   } catch (error) {
@@ -296,6 +288,183 @@ export const changePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Error changing password.",
+    });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email, workId, department } = req.body;
+    
+    if (!email || !workId || !department) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, Work ID, and Department are required.",
+      });
+    }
+
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      workId: workId,
+      associated_department: department
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No user found with the provided credentials.",
+      });
+    }
+
+    const resetToken = user.createPasswordResetToken();
+    await user.save();
+
+    // Send email with reset token
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const emailContent = `
+      <h2>Password Reset Request</h2>
+      <p>Hello ${user.name},</p>
+      <p>You have requested to reset your password. Click the link below to reset it:</p>
+      <a href="${resetUrl}">Reset Password</a>
+      <p>If you didn't request this, please ignore this email.</p>
+      <p>This link will expire in 10 minutes.</p>
+      <p>Best regards,<br>DisasterCatcher Team</p>
+    `;
+
+    // Send email using nodemailer
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL, // Send to admin email
+      subject: 'Password Reset Request',
+      html: emailContent
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset instructions have been sent to the administrator.",
+    });
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error processing forgot password request.",
+    });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token.",
+      });
+    }
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error resetting password.",
+    });
+  }
+};
+
+export const updatePreferences = async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { preferences } },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Preferences updated successfully.",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error updating preferences.",
+    });
+  }
+};
+
+export const updatePushToken = async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    const userId = req.user._id;
+
+    if (!pushToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Push token is required.",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { pushToken } },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Push token updated successfully.",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error updating push token.",
     });
   }
 };
