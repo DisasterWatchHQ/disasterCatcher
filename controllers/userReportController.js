@@ -7,20 +7,10 @@ export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
 
-    let locationData;
-    try {
-      locationData =
-        typeof location === "string" ? JSON.parse(location) : location;
-    } catch (error) {
-      return res.status(400).json({
-        error: "Invalid location data format",
-      });
-    }
-
     if (
-      !locationData?.address?.city ||
-      !locationData?.address?.district ||
-      !locationData?.address?.province
+      !location?.address?.city ||
+      !location?.address?.district ||
+      !location?.address?.province
     ) {
       return res.status(400).json({
         error:
@@ -28,16 +18,12 @@ export const createUserReport = async (req, res) => {
       });
     }
 
-    const images = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
-
     const reportData = {
       title,
       disaster_category,
       description,
-      location: locationData,
-      images,
+      location,
+      reporter_type: "anonymous", // or handle authentication if implemented
     };
 
     const newReport = await UserReports.create(reportData);
@@ -53,12 +39,6 @@ export const verifyReport = async (req, res) => {
     const { severity, notes } = req.body;
     const reportId = req.params.id;
     const verifyingUser = req.user;
-
-    if (!verifyingUser.isVerified) {
-      return res.status(403).json({
-        error: "Only verified users can verify reports",
-      });
-    }
 
     const report = await UserReports.findById(reportId);
     if (!report) {
@@ -105,12 +85,6 @@ export const dismissReport = async (req, res) => {
     const { notes } = req.body;
     const reportId = req.params.id;
     const user = req.user;
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        error: "Only verified users can dismiss reports",
-      });
-    }
 
     const report = await UserReports.findById(reportId);
     if (!report) {

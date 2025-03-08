@@ -23,7 +23,7 @@ import {
 const router = express.Router();
 
 router.get("/feed", getPublicFeed);
-// router.post("/",upload.array('images', 3), createUserReport);
+router.post("/", createUserReport);
 router.get("/public", getUserReports);
 router.get('/reports', getFeedReports);
 router.get('/feedstats', getFeedStats);
