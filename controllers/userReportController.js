@@ -40,11 +40,26 @@ export const verifyReport = async (req, res) => {
     const reportId = req.params.id;
     const verifyingUser = req.user;
 
+    console.log("Verifying report:", {
+      reportId,
+      severity,
+      notes,
+      user: verifyingUser,
+    });
+
     const report = await UserReports.findById(reportId);
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
 
+    console.log("Before update:", report);
+
+    if (report.verification_status !== "pending") {
+      return res.status(400).json({
+        error: `Report is already ${report.verification_status}`,
+      });
+    }
+    
     const verificationTime = Math.round(
       (new Date() - report.createdAt) / (1000 * 60),
     );
@@ -62,6 +77,8 @@ export const verifyReport = async (req, res) => {
 
     const updatedReport = await report.save();
 
+    console.log("After update:", updatedReport);
+
     await createSystemLog(
       verifyingUser._id,
       "VERIFY_REPORT",
@@ -74,7 +91,12 @@ export const verifyReport = async (req, res) => {
       },
     );
 
-    res.status(200).json(updatedReport);
+    res.status(200).json({
+      success: true,
+      message: "Report verified successfully",
+      report: updatedReport,
+      verification: updatedReport.verification,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -86,10 +108,14 @@ export const dismissReport = async (req, res) => {
     const reportId = req.params.id;
     const user = req.user;
 
+    console.log("Dismissing report:", { reportId, notes, user });
+
     const report = await UserReports.findById(reportId);
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
+
+    console.log("Before update:", report);
 
     const originalState = report.toJSON();
 
@@ -101,6 +127,8 @@ export const dismissReport = async (req, res) => {
     };
 
     const updatedReport = await report.save();
+
+    console.log("After update:", updatedReport);
 
     await createSystemLog(
       user._id,
@@ -114,7 +142,11 @@ export const dismissReport = async (req, res) => {
       },
     );
 
-    res.status(200).json(updatedReport);
+    res.status(200).json({
+      success: true,
+      message: "Report dismissed successfully",
+      report: updatedReport,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -460,14 +492,15 @@ export const getFeedReports = async (req, res) => {
       page = 1,
       limit = 10,
       disaster_category,
-      verified_only,
+      verification_status,
       district,
     } = req.query;
 
     const query = {};
 
-    if (verified_only === "true") {
-      query.verification_status = "verified";
+    // Add verification status filter
+    if (verification_status) {
+      query.verification_status = verification_status;
     }
 
     if (disaster_category) {
@@ -478,6 +511,8 @@ export const getFeedReports = async (req, res) => {
       query["location.address.district"] = district;
     }
 
+    console.log("Query:", query); // Add logging to debug
+
     const reports = await UserReports.find(query)
       .sort({ date_time: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -485,6 +520,8 @@ export const getFeedReports = async (req, res) => {
       .lean();
 
     const total = await UserReports.countDocuments(query);
+
+    console.log(`Found ${reports.length} reports`); // Add logging
 
     res.status(200).json({
       success: true,
