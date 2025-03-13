@@ -37,18 +37,18 @@ export const createSystemLog = async (adminId, action, targetType, targetId, det
 
 export const getAdminLogs = async (req, res) => {
   try {
-    const { action, target_type, startDate, endDate, admin_id, limit = 50, page = 1 } = req.query;
+    const { action, targetType, startDate, endDate, adminId, limit = 50, page = 1 } = req.query;
 
     const query = {};
 
     if (action) {
       query.action = action;
     }
-    if (target_type) {
-      query.target_type = target_type;
+    if (targetType) {
+      query.target_type = targetType;
     }
-    if (admin_id) {
-      query.admin_id = admin_id;
+    if (adminId) {
+      query.admin_id = adminId;
     }
 
     if (startDate || endDate) {

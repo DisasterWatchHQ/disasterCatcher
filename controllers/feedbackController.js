@@ -20,12 +20,12 @@ export const createFeedback = async (req, res) => {
 
 export const getFeedbacks = async (req, res) => {
   try {
-    const { feedback_type, status, startDate, endDate, limit = 10, page = 1 } = req.query;
+    const { feedbackType, status, startDate, endDate, limit = 10, page = 1 } = req.query;
 
     const query = {};
 
-    if (feedback_type) {
-      query.feedback_type = feedback_type;
+    if (feedbackType) {
+      query.feedback_type = feedbackType;
     }
     if (status) {
       query.status = status;

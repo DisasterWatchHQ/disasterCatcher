@@ -9,9 +9,9 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, workId, associated_department } = req.body;
+    const { name, email, password, workId, associatedDepartment } = req.body;
 
-    if (!name || !email || !password || !workId || !associated_department) {
+    if (!name || !email || !password || !workId || !associatedDepartment) {
       return res.status(400).json({
         success: false,
         message: "Name, email, password, work ID, and department are required.",
@@ -37,7 +37,7 @@ export const createUser = async (req, res) => {
       email: email.toLowerCase(),
       password,
       workId,
-      associated_department,
+      associatedDepartment,
     });
 
     res.status(201).json({

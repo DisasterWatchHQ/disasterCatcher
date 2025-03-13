@@ -10,13 +10,13 @@ export const createResource = async (req, res) => {
       description,
       location,
       contact,
-      availability_status,
+      availabilityStatus,
       content,
       metadata,
       tags,
-      operating_hours,
+      operatingHours,
       capacity,
-      emergency_level,
+      emergencyLevel,
     } = req.body;
 
     const resourceData = {
@@ -50,8 +50,8 @@ export const createResource = async (req, res) => {
       }
 
       resourceData.location = locationData;
-      resourceData.availability_status = availability_status;
-      resourceData.operating_hours = operating_hours;
+      resourceData.availability_status = availabilityStatus;
+      resourceData.operating_hours = operatingHours;
       if (type === "shelter") {
         resourceData.capacity = capacity;
       }
@@ -63,7 +63,7 @@ export const createResource = async (req, res) => {
     }
 
     if (category === "emergency_contact") {
-      resourceData.emergency_level = emergency_level;
+      resourceData.emergency_level = emergencyLevel;
     }
 
     const resource = new Resource(resourceData);
@@ -90,7 +90,7 @@ export const getFacilities = async (req, res) => {
   try {
     const {
       type,
-      availability_status,
+      availabilityStatus,
       city,
       district,
       province,
@@ -108,8 +108,8 @@ export const getFacilities = async (req, res) => {
     if (type) {
       query.type = type;
     }
-    if (availability_status) {
-      query.availability_status = availability_status;
+    if (availabilityStatus) {
+      query.availability_status = availabilityStatus;
     }
     if (tags) {
       query.tags = { $in: tags.split(",") };
@@ -189,15 +189,15 @@ export const getGuides = async (req, res) => {
 
 export const getEmergencyContacts = async (req, res) => {
   try {
-    const { emergency_level } = req.query;
+    const { emergencyLevel } = req.query;
 
     const query = {
       category: "emergency_contact",
       status: "active",
     };
 
-    if (emergency_level) {
-      query.emergency_level = emergency_level;
+    if (emergencyLevel) {
+      query.emergency_level = emergencyLevel;
     }
 
     const resources = await Resource.find(query)
@@ -215,7 +215,7 @@ export const getEmergencyContacts = async (req, res) => {
 
 export const getNearbyFacilities = async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 10000, type, availability_status } = req.query;
+    const { latitude, longitude, maxDistance = 10000, type, availabilityStatus } = req.query;
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Latitude and longitude are required" });
@@ -238,8 +238,8 @@ export const getNearbyFacilities = async (req, res) => {
     if (type) {
       query.type = type;
     }
-    if (availability_status) {
-      query.availability_status = availability_status;
+    if (availabilityStatus) {
+      query.availability_status = availabilityStatus;
     }
 
     const resources = await Resource.find(query)
