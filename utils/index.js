@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import logger from "./logger.js";
 
 dotenv.config();
 
@@ -54,15 +56,8 @@ export const connectMongoose = async () => {
 // };
 //
 
-export const createJWT = (res, userId) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== "dev",
-    sameSite: "strict",
-    maxAge: 1 * 24 * 60 * 60 * 1000,
+export const createJWT = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "24h",
   });
 };

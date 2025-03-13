@@ -37,10 +37,7 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-        "Please enter a valid email",
-      ],
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
@@ -95,19 +92,21 @@ const userSchema = new Schema(
 // Password reset methods
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
-  this.passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+
+  this.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
   return resetToken;
 };
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) {
+    return next();
+  }
 
   try {
     const salt = await bcrypt.genSalt(10);
+
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
@@ -125,17 +124,17 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
+
   delete userObject.password;
   delete userObject.passwordResetToken;
   delete userObject.passwordResetExpires;
   delete userObject.__v;
+
   return userObject;
 };
 
-userSchema.index(
-  { "location.latitude": 1, "location.longitude": 1 },
-  { sparse: true },
-);
+userSchema.index({ "location.latitude": 1, "location.longitude": 1 }, { sparse: true });
 
 const User = mongoose.model("User", userSchema);
+
 export default User;

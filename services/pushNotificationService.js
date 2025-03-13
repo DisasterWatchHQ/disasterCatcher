@@ -14,6 +14,7 @@ export const pushNotificationService = {
   async sendPushNotification(userId, message) {
     try {
       const user = await User.findById(userId);
+
       if (!user || !user.preferences.notifications.push) {
         return false;
       }
@@ -57,9 +58,10 @@ export const pushNotificationService = {
         const chunks = expo.chunkPushNotifications(notifications);
         const tickets = [];
 
-        for (let chunk of chunks) {
+        for (const chunk of chunks) {
           try {
             const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+
             tickets.push(...ticketChunk);
           } catch (error) {
             console.error("Error sending chunk:", error);
@@ -72,6 +74,7 @@ export const pushNotificationService = {
       return true;
     } catch (error) {
       console.error("Error in sendPushNotification:", error);
+
       return false;
     }
   },
@@ -85,6 +88,7 @@ export const pushNotificationService = {
       });
 
       const notifications = [];
+
       for (const user of users) {
         if (this.isWithinRadius(user.location, location, radius)) {
           if (user.pushToken && Expo.isExpoPushToken(user.pushToken)) {
@@ -126,9 +130,10 @@ export const pushNotificationService = {
         const chunks = expo.chunkPushNotifications(notifications);
         const tickets = [];
 
-        for (let chunk of chunks) {
+        for (const chunk of chunks) {
           try {
             const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+
             tickets.push(...ticketChunk);
           } catch (error) {
             console.error("Error sending chunk:", error);
@@ -141,12 +146,15 @@ export const pushNotificationService = {
       return true;
     } catch (error) {
       console.error("Error in broadcastToLocation:", error);
+
       return false;
     }
   },
 
   isWithinRadius(point1, point2, radius) {
-    if (!point1 || !point2) return false;
+    if (!point1 || !point2) {
+      return false;
+    }
 
     const lat1 = parseFloat(point1.latitude);
     const lon1 = parseFloat(point1.longitude);

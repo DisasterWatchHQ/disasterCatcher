@@ -182,6 +182,7 @@ resourceSchema.methods.getAvailability = function () {
   if (this.category === "facility") {
     return this.availability_status;
   }
+
   return null;
 };
 
@@ -192,10 +193,7 @@ resourceSchema.methods.isOperational = function () {
   );
 };
 
-resourceSchema.statics.findNearby = async function (
-  coordinates,
-  maxDistance = 5000,
-) {
+resourceSchema.statics.findNearby = async function (coordinates, maxDistance = 5000) {
   return this.find({
     "location.coordinates": {
       $near: {
@@ -222,7 +220,9 @@ resourceSchema.statics.findActiveGuides = async function () {
 
 resourceSchema.virtual("isVerified").get(function () {
   const oneMonthAgo = new Date();
+
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
   return this.last_verified >= oneMonthAgo;
 });
 

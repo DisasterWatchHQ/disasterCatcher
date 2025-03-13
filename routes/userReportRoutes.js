@@ -13,11 +13,7 @@ import {
   getFeedStats,
   getFeedUpdates,
 } from "../controllers/userReportController.js";
-import {
-  protectRoute,
-  verifyVerifiedUser,
-  verifyToken,
-} from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyVerifiedUser, verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

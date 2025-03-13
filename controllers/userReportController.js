@@ -7,14 +7,9 @@ export const createUserReport = async (req, res) => {
   try {
     const { title, disaster_category, description, location } = req.body;
 
-    if (
-      !location?.address?.city ||
-      !location?.address?.district ||
-      !location?.address?.province
-    ) {
+    if (!location?.address?.city || !location?.address?.district || !location?.address?.province) {
       return res.status(400).json({
-        error:
-          "Location must include address with city, district, and province",
+        error: "Location must include address with city, district, and province",
       });
     }
 
@@ -27,6 +22,7 @@ export const createUserReport = async (req, res) => {
     };
 
     const newReport = await UserReports.create(reportData);
+
     res.status(201).json(newReport);
   } catch (error) {
     console.error("Create report error:", error);
@@ -41,6 +37,7 @@ export const verifyReport = async (req, res) => {
     const verifyingUser = req.user;
 
     const report = await UserReports.findById(reportId);
+
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
@@ -51,9 +48,7 @@ export const verifyReport = async (req, res) => {
       });
     }
 
-    const verificationTime = Math.round(
-      (new Date() - report.createdAt) / (1000 * 60),
-    );
+    const verificationTime = Math.round((new Date() - report.createdAt) / (1000 * 60));
 
     report.verification_status = "verified";
     report.verification = {
@@ -68,17 +63,11 @@ export const verifyReport = async (req, res) => {
 
     const updatedReport = await report.save();
 
-    await createSystemLog(
-      verifyingUser._id,
-      "VERIFY_REPORT",
-      "user_report",
-      report._id,
-      {
-        previous_state: report.toJSON(),
-        new_state: updatedReport.toJSON(),
-        message: `Report verified by ${verifyingUser.name} with ${severity} severity`,
-      },
-    );
+    await createSystemLog(verifyingUser._id, "VERIFY_REPORT", "user_report", report._id, {
+      previous_state: report.toJSON(),
+      new_state: updatedReport.toJSON(),
+      message: `Report verified by ${verifyingUser.name} with ${severity} severity`,
+    });
 
     res.status(200).json({
       success: true,
@@ -98,6 +87,7 @@ export const dismissReport = async (req, res) => {
     const user = req.user;
 
     const report = await UserReports.findById(reportId);
+
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
@@ -113,17 +103,11 @@ export const dismissReport = async (req, res) => {
 
     const updatedReport = await report.save();
 
-    await createSystemLog(
-      user._id,
-      "DISMISS_REPORT",
-      "user_report",
-      report._id,
-      {
-        previous_state: originalState,
-        new_state: updatedReport.toJSON(),
-        message: `Report dismissed by ${user.name}`,
-      },
-    );
+    await createSystemLog(user._id, "DISMISS_REPORT", "user_report", report._id, {
+      previous_state: originalState,
+      new_state: updatedReport.toJSON(),
+      message: `Report dismissed by ${user.name}`,
+    });
 
     res.status(200).json({
       success: true,
@@ -153,30 +137,39 @@ export const getUserReports = async (req, res) => {
 
     const query = {};
 
-    if (disaster_category) query.disaster_category = disaster_category;
-    if (verification_status) query.verification_status = verification_status;
-    if (reporter_type) query.reporter_type = reporter_type;
-    if (severity) query["verification.severity"] = severity;
+    if (disaster_category) {
+      query.disaster_category = disaster_category;
+    }
+    if (verification_status) {
+      query.verification_status = verification_status;
+    }
+    if (reporter_type) {
+      query.reporter_type = reporter_type;
+    }
+    if (severity) {
+      query["verification.severity"] = severity;
+    }
 
     if (city || district || province) {
-      if (city)
+      if (city) {
         query["location.address.city"] = { $regex: city, $options: "i" };
-      if (district)
-        query["location.address.district"] = {
-          $regex: district,
-          $options: "i",
-        };
-      if (province)
-        query["location.address.province"] = {
-          $regex: province,
-          $options: "i",
-        };
+      }
+      if (district) {
+        query["location.address.district"] = { $regex: district, $options: "i" };
+      }
+      if (province) {
+        query["location.address.province"] = { $regex: province, $options: "i" };
+      }
     }
 
     if (startDate || endDate) {
       query.date_time = {};
-      if (startDate) query.date_time.$gte = new Date(startDate);
-      if (endDate) query.date_time.$lte = new Date(endDate);
+      if (startDate) {
+        query.date_time.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.date_time.$lte = new Date(endDate);
+      }
     }
 
     const skip = (page - 1) * limit;
@@ -207,7 +200,10 @@ export const getReportsByUser = async (req, res) => {
     const { status, page = 1, limit = 10 } = req.query;
 
     const query = { reporter: userId };
-    if (status) query.verification_status = status;
+
+    if (status) {
+      query.verification_status = status;
+    }
 
     const reports = await UserReports.find(query)
       .populate("verification.verified_by", "name workId associated_department")
@@ -250,7 +246,6 @@ export const getReportStats = async (req, res) => {
             },
           ],
           bySeverity: [
-            { $match: { verification_status: "verified" } },
             {
               $group: {
                 _id: "$verification.severity",
@@ -258,22 +253,10 @@ export const getReportStats = async (req, res) => {
               },
             },
           ],
-          recentTrends: [
-            {
-              $match: {
-                date_time: {
-                  $gte: new Date(new Date().setDate(new Date().getDate() - 30)),
-                },
-              },
-            },
+          byReporterType: [
             {
               $group: {
-                _id: {
-                  $dateToString: {
-                    format: "%Y-%m-%d",
-                    date: "$date_time",
-                  },
-                },
+                _id: "$reporter_type",
                 count: { $sum: 1 },
               },
             },
@@ -282,7 +265,10 @@ export const getReportStats = async (req, res) => {
       },
     ]);
 
-    res.status(200).json(stats[0]);
+    res.status(200).json({
+      success: true,
+      stats: stats[0],
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -291,6 +277,7 @@ export const getReportStats = async (req, res) => {
 export const getVerificationStats = async (req, res) => {
   try {
     const today = new Date();
+
     today.setHours(0, 0, 0, 0);
 
     const stats = await Promise.all([
@@ -336,6 +323,7 @@ export const getVerificationStats = async (req, res) => {
 export const getReportAnalytics = async (req, res) => {
   try {
     const weekAgo = new Date();
+
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     const analytics = await UserReports.aggregate([
@@ -422,6 +410,7 @@ export const getReportAnalytics = async (req, res) => {
     ]);
 
     const trendsMap = {};
+
     analytics[0].weeklyTrends.forEach((item) => {
       if (!trendsMap[item.date]) {
         trendsMap[item.date] = { date: item.date };
@@ -471,13 +460,7 @@ export const getPublicFeed = async (req, res) => {
 
 export const getFeedReports = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      disaster_category,
-      verification_status,
-      district,
-    } = req.query;
+    const { page = 1, limit = 10, disaster_category, verification_status, district } = req.query;
 
     const query = {};
 
@@ -573,10 +556,7 @@ export const getFeedStats = async (req, res) => {
       data: {
         reportStats,
         warningStats,
-        activeWarnings: warningStats.reduce(
-          (acc, curr) => acc + curr.active_warnings,
-          0,
-        ),
+        activeWarnings: warningStats.reduce((acc, curr) => acc + curr.active_warnings, 0),
       },
     });
   } catch (error) {
@@ -599,9 +579,7 @@ export const getFeedUpdates = async (req, res) => {
     })
       .sort({ date_time: -1 })
       .limit(20)
-      .select(
-        "title date_time location.address.city verification_status verification.severity",
-      )
+      .select("title date_time location.address.city verification_status verification.severity")
       .lean();
 
     res.status(200).json({

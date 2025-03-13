@@ -3,10 +3,12 @@ import { createSystemLog } from "./adminLogsController.js";
 
 export const createFeedback = async (req, res) => {
   try {
+    const { feedbackType, message } = req.body;
+
     const newFeedback = await Feedback.create({
       user_id: req.user?.id,
-      feedback_type: req.body.feedback_type,
-      message: req.body.message,
+      feedback_type: feedbackType,
+      message: message,
       status: "pending",
     });
 
@@ -18,24 +20,25 @@ export const createFeedback = async (req, res) => {
 
 export const getFeedbacks = async (req, res) => {
   try {
-    const {
-      feedback_type,
-      status,
-      startDate,
-      endDate,
-      limit = 10,
-      page = 1,
-    } = req.query;
+    const { feedback_type, status, startDate, endDate, limit = 10, page = 1 } = req.query;
 
     const query = {};
 
-    if (feedback_type) query.feedback_type = feedback_type;
-    if (status) query.status = status;
+    if (feedback_type) {
+      query.feedback_type = feedback_type;
+    }
+    if (status) {
+      query.status = status;
+    }
 
     if (startDate || endDate) {
       query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate);
+      }
     }
 
     const feedbacks = await Feedback.find(query)
@@ -72,14 +75,13 @@ export const getFeedbackById = async (req, res) => {
 export const updateFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id);
+
     if (!feedback) {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
     if (!req.user || req.user.role !== "official") {
-      return res
-        .status(403)
-        .json({ message: "Only admins can update feedback" });
+      return res.status(403).json({ message: "Only admins can update feedback" });
     }
 
     const updatedFeedback = await Feedback.findByIdAndUpdate(
@@ -108,28 +110,21 @@ export const updateFeedback = async (req, res) => {
 export const deleteFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id);
+
     if (!feedback) {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
     if (!req.user || req.user.role !== "official") {
-      return res
-        .status(403)
-        .json({ message: "Only admins can delete feedback" });
+      return res.status(403).json({ message: "Only admins can delete feedback" });
     }
 
     await Feedback.findByIdAndDelete(req.params.id);
 
-    await createSystemLog(
-      req.user.id,
-      "DELETE_FEEDBACK",
-      "feedback",
-      feedback._id,
-      {
-        previous_state: feedback.toObject(),
-        message: `Feedback was deleted`,
-      },
-    );
+    await createSystemLog(req.user.id, "DELETE_FEEDBACK", "feedback", feedback._id, {
+      previous_state: feedback.toObject(),
+      message: "Feedback was deleted",
+    });
 
     res.status(200).json({ message: "Feedback deleted successfully" });
   } catch (error) {
@@ -144,6 +139,7 @@ export const getMyFeedback = async (req, res) => {
       .sort({
         createdAt: -1,
       });
+
     res.status(200).json(feedbacks);
   } catch (error) {
     res.status(500).json({ error: error.message });

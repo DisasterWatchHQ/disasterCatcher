@@ -6,10 +6,7 @@ import {
   updateFeedback,
   deleteFeedback,
 } from "../controllers/feedbackController.js";
-import {
-  protectRoute,
-  verifyVerifiedUser,
-} from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyVerifiedUser } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

@@ -61,8 +61,13 @@ export const getAllUsers = async (req, res) => {
     const { department, email } = req.query;
 
     const query = {};
-    if (department) query.associated_department = department;
-    if (email) query.email = new RegExp(email, "i");
+
+    if (department) {
+      query.associated_department = department;
+    }
+    if (email) {
+      query.email = new RegExp(email, "i");
+    }
 
     const users = await User.find(query)
       .skip((page - 1) * limit)
@@ -108,6 +113,7 @@ export const getUserById = async (req, res) => {
     }
 
     const user = await User.findById(id).select("-password");
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -146,6 +152,7 @@ export const updateUser = async (req, res) => {
     }
 
     const updates = { ...req.body };
+
     delete updates.password;
 
     const user = await User.findByIdAndUpdate(
@@ -194,9 +201,7 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error deleting user.", error: error.message });
+    res.status(500).json({ message: "Error deleting user.", error: error.message });
   }
 };
 
@@ -212,6 +217,7 @@ export const authenticateUser = async (req, res) => {
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -220,6 +226,7 @@ export const authenticateUser = async (req, res) => {
     }
 
     const isMatch = await user.comparePassword(password);
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -281,6 +288,7 @@ export const changePassword = async (req, res) => {
     }
 
     const user = await User.findById(id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -289,6 +297,7 @@ export const changePassword = async (req, res) => {
     }
 
     const isMatch = await user.comparePassword(currentPassword);
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -336,6 +345,7 @@ export const forgotPassword = async (req, res) => {
     }
 
     const resetToken = user.createPasswordResetToken();
+
     await user.save();
 
     // Send email with reset token
@@ -370,8 +380,7 @@ export const forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message:
-        "Password reset instructions have been sent to the administrator.",
+      message: "Password reset instructions have been sent to the administrator.",
     });
   } catch (error) {
     console.error("Forgot Password Error:", error);

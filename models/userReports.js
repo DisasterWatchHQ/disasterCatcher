@@ -109,4 +109,5 @@ userReportSchema.pre("save", function (next) {
 });
 
 const UserReports = mongoose.model("UserReports", userReportSchema);
+
 export default UserReports;

@@ -34,14 +34,7 @@ const adminLogSchema = new Schema(
     target_type: {
       type: String,
       required: true,
-      enum: [
-        "resource",
-        "incident_report",
-        "user_report",
-        "user",
-        "feedback",
-        "warning",
-      ],
+      enum: ["resource", "incident_report", "user_report", "user", "feedback", "warning"],
     },
     target_id: {
       type: Schema.Types.ObjectId,
@@ -63,4 +56,5 @@ adminLogSchema.index({ createdAt: -1 });
 adminLogSchema.index({ target_type: 1, target_id: 1 });
 
 const AdminLog = mongoose.model("AdminLog", adminLogSchema);
+
 export default AdminLog;

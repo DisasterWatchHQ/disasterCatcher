@@ -9,11 +9,7 @@ import {
   updateResource,
   deleteResource,
 } from "../controllers/resourceController.js";
-import {
-  protectRoute,
-  verifyVerifiedUser,
-  verifyToken,
-} from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyVerifiedUser, verifyToken } from "../middlewares/authMiddleware.js";
 import Resource from "../models/resources.js";
 
 const router = express.Router();
@@ -32,6 +28,7 @@ router.delete("/:id", deleteResource);
 
 router.get("/verified/last-month", async (req, res) => {
   const oneMonthAgo = new Date();
+
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
   const resources = await Resource.find({

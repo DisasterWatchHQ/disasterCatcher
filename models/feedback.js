@@ -45,4 +45,5 @@ feedbackSchema.set("toJSON", {
 });
 
 const Feedback = mongoose.model("Feedback", feedbackSchema);
+
 export default Feedback;

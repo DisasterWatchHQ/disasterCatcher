@@ -42,9 +42,6 @@ const webPushSubscriptionSchema = new mongoose.Schema({
 
 // Index for faster queries
 webPushSubscriptionSchema.index({ userId: 1 });
-webPushSubscriptionSchema.index(
-  { "subscription.endpoint": 1 },
-  { unique: true },
-);
+webPushSubscriptionSchema.index({ "subscription.endpoint": 1 }, { unique: true });
 
 export default mongoose.model("WebPushSubscription", webPushSubscriptionSchema);

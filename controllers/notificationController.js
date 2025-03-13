@@ -6,12 +6,9 @@ import { sendNotification } from "../services/notificationService.js";
 export const notificationController = {
   broadcast: async (message, location = null, radius = 50) => {
     if (location) {
-      return await pushNotificationService.broadcastToLocation(
-        location,
-        message,
-        radius,
-      );
+      return await pushNotificationService.broadcastToLocation(location, message, radius);
     }
+
     return [];
   },
 
@@ -88,8 +85,7 @@ export const notificationController = {
       console.error("Error in unsubscribeWebPush:", error);
       res.status(500).json({
         success: false,
-        message:
-          error.message || "Error unsubscribing from web push notifications",
+        message: error.message || "Error unsubscribing from web push notifications",
       });
     }
   },
@@ -128,9 +124,7 @@ export const notificationController = {
         url: "/dashboard",
       });
 
-      res
-        .status(201)
-        .json({ message: "Successfully subscribed to notifications" });
+      res.status(201).json({ message: "Successfully subscribed to notifications" });
     } catch (error) {
       console.error("Error subscribing to notifications:", error);
       res.status(500).json({ message: "Error subscribing to notifications" });
@@ -146,9 +140,7 @@ export const notificationController = {
       res.json({ message: "Successfully unsubscribed from notifications" });
     } catch (error) {
       console.error("Error unsubscribing from notifications:", error);
-      res
-        .status(500)
-        .json({ message: "Error unsubscribing from notifications" });
+      res.status(500).json({ message: "Error unsubscribing from notifications" });
     }
   },
 
@@ -162,9 +154,7 @@ export const notificationController = {
       res.json(subscriptions);
     } catch (error) {
       console.error("Error getting notification subscriptions:", error);
-      res
-        .status(500)
-        .json({ message: "Error getting notification subscriptions" });
+      res.status(500).json({ message: "Error getting notification subscriptions" });
     }
   },
 };

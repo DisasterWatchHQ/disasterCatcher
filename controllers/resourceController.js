@@ -31,14 +31,12 @@ export const createResource = async (req, res) => {
     };
 
     if (category === "facility") {
-      let locationData = {
+      const locationData = {
         type: location.type,
       };
 
       if (location.type === "point") {
-        locationData.coordinates = location.coordinates.map((coord) =>
-          parseFloat(coord),
-        );
+        locationData.coordinates = location.coordinates.map((coord) => parseFloat(coord));
       }
 
       if (location.address) {
@@ -70,16 +68,11 @@ export const createResource = async (req, res) => {
 
     const resource = new Resource(resourceData);
     const savedResource = await resource.save();
-    await createSystemLog(
-      req.user.id,
-      "CREATE_RESOURCE",
-      "resource",
-      resource._id,
-      {
-        new_state: resource.toObject(),
-        message: `New resource ${resource.name} was created`,
-      },
-    );
+
+    await createSystemLog(req.user.id, "CREATE_RESOURCE", "resource", resource._id, {
+      new_state: resource.toObject(),
+      message: `New resource ${resource.name} was created`,
+    });
 
     res.status(201).json({
       success: true,
@@ -112,23 +105,26 @@ export const getFacilities = async (req, res) => {
       status: status || "active",
     };
 
-    if (type) query.type = type;
-    if (availability_status) query.availability_status = availability_status;
-    if (tags) query.tags = { $in: tags.split(",") };
+    if (type) {
+      query.type = type;
+    }
+    if (availability_status) {
+      query.availability_status = availability_status;
+    }
+    if (tags) {
+      query.tags = { $in: tags.split(",") };
+    }
 
     if (city || district || province) {
-      if (city)
+      if (city) {
         query["location.address.city"] = { $regex: city, $options: "i" };
-      if (district)
-        query["location.address.district"] = {
-          $regex: district,
-          $options: "i",
-        };
-      if (province)
-        query["location.address.province"] = {
-          $regex: province,
-          $options: "i",
-        };
+      }
+      if (district) {
+        query["location.address.district"] = { $regex: district, $options: "i" };
+      }
+      if (province) {
+        query["location.address.province"] = { $regex: province, $options: "i" };
+      }
     }
 
     const skip = (page - 1) * limit;
@@ -162,8 +158,12 @@ export const getGuides = async (req, res) => {
       status: "active",
     };
 
-    if (type) query.type = type;
-    if (tags) query.tags = { $in: tags.split(",") };
+    if (type) {
+      query.type = type;
+    }
+    if (tags) {
+      query.tags = { $in: tags.split(",") };
+    }
 
     const skip = (page - 1) * limit;
 
@@ -196,7 +196,9 @@ export const getEmergencyContacts = async (req, res) => {
       status: "active",
     };
 
-    if (emergency_level) query.emergency_level = emergency_level;
+    if (emergency_level) {
+      query.emergency_level = emergency_level;
+    }
 
     const resources = await Resource.find(query)
       .populate("added_by", "name email")
@@ -213,18 +215,10 @@ export const getEmergencyContacts = async (req, res) => {
 
 export const getNearbyFacilities = async (req, res) => {
   try {
-    const {
-      latitude,
-      longitude,
-      maxDistance = 10000,
-      type,
-      availability_status,
-    } = req.query;
+    const { latitude, longitude, maxDistance = 10000, type, availability_status } = req.query;
 
     if (!latitude || !longitude) {
-      return res
-        .status(400)
-        .json({ message: "Latitude and longitude are required" });
+      return res.status(400).json({ message: "Latitude and longitude are required" });
     }
 
     const query = {
@@ -241,17 +235,20 @@ export const getNearbyFacilities = async (req, res) => {
       },
     };
 
-    if (type) query.type = type;
-    if (availability_status) query.availability_status = availability_status;
+    if (type) {
+      query.type = type;
+    }
+    if (availability_status) {
+      query.availability_status = availability_status;
+    }
 
-    const resources = await Resource.find(query).populate(
-      "added_by",
-      "name email",
-    );
+    const resources = await Resource.find(query)
+      .populate("added_by", "name email")
+      .sort({ "location.coordinates": 1 });
 
     res.status(200).json({
       success: true,
-      data: resources,
+      resources,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -260,10 +257,7 @@ export const getNearbyFacilities = async (req, res) => {
 
 export const getResourceById = async (req, res) => {
   try {
-    const resource = await Resource.findById(req.params.id).populate(
-      "added_by",
-      "name email",
-    );
+    const resource = await Resource.findById(req.params.id).populate("added_by", "name email");
 
     if (!resource) {
       return res.status(404).json({ message: "Resource not found" });
@@ -271,7 +265,7 @@ export const getResourceById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: resource,
+      resource,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -280,32 +274,27 @@ export const getResourceById = async (req, res) => {
 
 export const updateResource = async (req, res) => {
   try {
-    const originalResource = await Resource.findById(req.params.id);
-    if (!originalResource) {
+    const resource = await Resource.findById(req.params.id);
+
+    if (!resource) {
       return res.status(404).json({ message: "Resource not found" });
     }
 
     const updatedResource = await Resource.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { ...req.body, last_verified: new Date() },
       { new: true, runValidators: true },
     ).populate("added_by", "name email");
 
-    await createSystemLog(
-      req.user.id,
-      "UPDATE_RESOURCE",
-      "resource",
-      updatedResource._id,
-      {
-        previous_state: originalResource.toObject(),
-        new_state: updatedResource.toObject(),
-        message: `Resource ${updatedResource.name} was updated`,
-      },
-    );
+    await createSystemLog(req.user.id, "UPDATE_RESOURCE", "resource", resource._id, {
+      previous_state: resource.toObject(),
+      new_state: updatedResource.toObject(),
+      message: `Resource ${resource.name} was updated`,
+    });
 
     res.status(200).json({
       success: true,
-      data: updatedResource,
+      resource: updatedResource,
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -315,22 +304,17 @@ export const updateResource = async (req, res) => {
 export const deleteResource = async (req, res) => {
   try {
     const resource = await Resource.findById(req.params.id);
+
     if (!resource) {
       return res.status(404).json({ message: "Resource not found" });
     }
 
     await Resource.findByIdAndDelete(req.params.id);
 
-    await createSystemLog(
-      req.user.id,
-      "DELETE_RESOURCE",
-      "resource",
-      resource._id,
-      {
-        previous_state: resource.toObject(),
-        message: `Resource ${resource.name} was deleted`,
-      },
-    );
+    await createSystemLog(req.user.id, "DELETE_RESOURCE", "resource", resource._id, {
+      previous_state: resource.toObject(),
+      message: `Resource ${resource.name} was deleted`,
+    });
 
     res.status(200).json({
       success: true,
