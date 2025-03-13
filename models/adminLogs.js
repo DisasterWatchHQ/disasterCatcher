@@ -47,7 +47,7 @@ const adminLogSchema = new Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 adminLogSchema.index({ admin_id: 1 });

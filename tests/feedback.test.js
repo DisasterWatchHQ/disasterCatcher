@@ -138,9 +138,7 @@ describe("Feedback System", () => {
     });
 
     test("should get feedback by ID", async () => {
-      const response = await request(app).get(
-        `/api/feedback/${testFeedback._id}`,
-      );
+      const response = await request(app).get(`/api/feedback/${testFeedback._id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(testFeedback._id.toString());
@@ -159,9 +157,7 @@ describe("Feedback System", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("in_progress");
-      expect(response.body.admin_response.message).toBe(
-        "We are working on this issue",
-      );
+      expect(response.body.admin_response.message).toBe("We are working on this issue");
     });
 
     test("should not allow non-admin to update feedback", async () => {

@@ -33,7 +33,7 @@ const feedbackSchema = new Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 feedbackSchema.set("toJSON", {

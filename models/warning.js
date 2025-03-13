@@ -85,7 +85,7 @@ const warningSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 warningSchema.set("toJSON", {

@@ -172,13 +172,11 @@ describe("Resource System", () => {
 
   describe("Resource Queries", () => {
     test("should get facilities with filters", async () => {
-      const response = await request(app)
-        .get("/api/resources/facilities")
-        .query({
-          type: "hospital",
-          availability_status: "open",
-          city: "Test City",
-        });
+      const response = await request(app).get("/api/resources/facilities").query({
+        type: "hospital",
+        availability_status: "open",
+        city: "Test City",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -198,11 +196,9 @@ describe("Resource System", () => {
     });
 
     test("should get emergency contacts with filters", async () => {
-      const response = await request(app)
-        .get("/api/resources/emergency-contacts")
-        .query({
-          emergency_level: "high",
-        });
+      const response = await request(app).get("/api/resources/emergency-contacts").query({
+        emergency_level: "high",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -210,13 +206,11 @@ describe("Resource System", () => {
     });
 
     test("should get nearby facilities", async () => {
-      const response = await request(app)
-        .get("/api/resources/facilities/nearby")
-        .query({
-          latitude: 1.234,
-          longitude: 5.678,
-          maxDistance: 10000,
-        });
+      const response = await request(app).get("/api/resources/facilities/nearby").query({
+        latitude: 1.234,
+        longitude: 5.678,
+        maxDistance: 10000,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -224,9 +218,7 @@ describe("Resource System", () => {
     });
 
     test("should get resource by ID", async () => {
-      const response = await request(app).get(
-        `/api/resources/${testResource._id}`,
-      );
+      const response = await request(app).get(`/api/resources/${testResource._id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

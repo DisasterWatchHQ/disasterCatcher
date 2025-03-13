@@ -7,7 +7,7 @@ const expo = new Expo();
 webpush.setVapidDetails(
   "mailto:your-email@example.com",
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
+  process.env.VAPID_PRIVATE_KEY
 );
 
 export const pushNotificationService = {
@@ -42,7 +42,7 @@ export const pushNotificationService = {
               data: message.data,
               icon: "/icons/notification-icon.png",
               badge: "/icons/notification-badge.png",
-            }),
+            })
           );
         } catch (error) {
           console.error("Error sending web push notification:", error);
@@ -112,7 +112,7 @@ export const pushNotificationService = {
                   data: message.data,
                   icon: "/icons/notification-icon.png",
                   badge: "/icons/notification-badge.png",
-                }),
+                })
               );
             } catch (error) {
               console.error("Error sending web push notification:", error);

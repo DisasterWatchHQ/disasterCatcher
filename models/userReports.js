@@ -72,7 +72,7 @@ const userReportSchema = new Schema(
       },
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 userReportSchema.index({ reporter: 1 });

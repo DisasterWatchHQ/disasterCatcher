@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const logFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.errors({ stack: true }),
-  winston.format.json(),
+  winston.format.json()
 );
 
 const logger = winston.createLogger({

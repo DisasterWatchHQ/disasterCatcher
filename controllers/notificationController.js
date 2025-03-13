@@ -31,7 +31,7 @@ export const notificationController = {
       const user = await User.findByIdAndUpdate(
         userId,
         { $set: { webPushSubscription: subscription } },
-        { new: true },
+        { new: true }
       );
 
       if (!user) {
@@ -67,7 +67,7 @@ export const notificationController = {
       const user = await User.findByIdAndUpdate(
         userId,
         { $unset: { webPushSubscription: 1 } },
-        { new: true },
+        { new: true }
       );
 
       if (!user) {

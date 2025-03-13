@@ -283,7 +283,7 @@ export const updateResource = async (req, res) => {
     const updatedResource = await Resource.findByIdAndUpdate(
       req.params.id,
       { ...req.body, last_verified: new Date() },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     ).populate("added_by", "name email");
 
     await createSystemLog(req.user.id, "UPDATE_RESOURCE", "resource", resource._id, {

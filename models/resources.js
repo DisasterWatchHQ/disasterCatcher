@@ -171,7 +171,7 @@ const resourceSchema = new Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 resourceSchema.index({ category: 1, type: 1 });

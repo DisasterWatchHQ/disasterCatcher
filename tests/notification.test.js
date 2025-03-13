@@ -49,10 +49,7 @@ describe("Notification System", () => {
         data: { type: "TEST" },
       };
 
-      const result = await notificationController.sendToUser(
-        testUser._id,
-        message,
-      );
+      const result = await notificationController.sendToUser(testUser._id, message);
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
@@ -69,11 +66,7 @@ describe("Notification System", () => {
         longitude: 5.678,
       };
 
-      const result = await notificationController.broadcast(
-        message,
-        location,
-        50,
-      );
+      const result = await notificationController.broadcast(message, location, 50);
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
@@ -102,10 +95,7 @@ describe("Notification System", () => {
         data: { type: "TEST" },
       };
 
-      const result = await notificationController.sendToUser(
-        testUser._id,
-        message,
-      );
+      const result = await notificationController.sendToUser(testUser._id, message);
       expect(result).toBe(false); // Should not send due to disabled preferences
     });
   });

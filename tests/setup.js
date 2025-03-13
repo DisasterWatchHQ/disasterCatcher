@@ -15,7 +15,7 @@ beforeAll(async () => {
     console.error("Failed to start MongoDB Memory Server:", error);
     // Fallback to local MongoDB if memory server fails
     await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/disaster-catcher-test",
+      process.env.MONGODB_URI || "mongodb://localhost:27017/disaster-catcher-test"
     );
   }
 

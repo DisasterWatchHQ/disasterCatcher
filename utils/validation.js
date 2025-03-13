@@ -26,7 +26,7 @@ export const warningSchema = Joi.object({
           district: Joi.string().required(),
           province: Joi.string().required(),
         }).required(),
-      }),
+      })
     )
     .required(),
   severity: Joi.string().valid("low", "medium", "high", "critical").required(),
@@ -85,7 +85,7 @@ export function validateEnv() {
 
   if (!validEnvironments.includes(process.env.NODE_ENV)) {
     throw new Error(
-      `Invalid NODE_ENV: ${process.env.NODE_ENV}. Must be one of: ${validEnvironments.join(", ")}`,
+      `Invalid NODE_ENV: ${process.env.NODE_ENV}. Must be one of: ${validEnvironments.join(", ")}`
     );
   }
 

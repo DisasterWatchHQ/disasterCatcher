@@ -33,10 +33,7 @@ describe("User Routes", () => {
     });
 
     testToken = jwt.sign({ userId: testUser._id }, process.env.JWT_SECRET);
-    officialToken = jwt.sign(
-      { userId: officialUser._id },
-      process.env.JWT_SECRET,
-    );
+    officialToken = jwt.sign({ userId: officialUser._id }, process.env.JWT_SECRET);
   });
 
   describe("Authentication", () => {
@@ -78,12 +75,10 @@ describe("User Routes", () => {
       const resetToken = testUser.createPasswordResetToken();
       await testUser.save();
 
-      const response = await request(app)
-        .post("/api/users/reset-password")
-        .send({
-          token: resetToken,
-          password: "newpassword123",
-        });
+      const response = await request(app).post("/api/users/reset-password").send({
+        token: resetToken,
+        password: "newpassword123",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -136,9 +131,7 @@ describe("User Routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.user.pushToken).toBe(
-        "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
-      );
+      expect(response.body.user.pushToken).toBe("ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]");
     });
   });
 

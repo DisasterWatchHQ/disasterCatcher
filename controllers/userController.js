@@ -158,7 +158,7 @@ export const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       { $set: updates },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     ).select("-password");
 
     if (!user) {
@@ -434,7 +434,7 @@ export const updatePreferences = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { preferences } },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     ).select("-password");
 
     if (!user) {
@@ -472,7 +472,7 @@ export const updatePushToken = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { pushToken } },
-      { new: true },
+      { new: true }
     ).select("-password");
 
     if (!user) {
@@ -521,7 +521,7 @@ export const updateAvatar = async (req, res) => {
           avatarUpdatedAt: new Date(),
         },
       },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     ).select("-password");
 
     if (!user) {

@@ -97,7 +97,7 @@ export const updateFeedback = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      },
+      }
     );
 
     res.status(200).json(updatedFeedback);

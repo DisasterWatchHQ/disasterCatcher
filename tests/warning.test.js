@@ -216,9 +216,7 @@ describe("Warning System", () => {
     });
 
     test("should get warning by ID", async () => {
-      const response = await request(app).get(
-        `/api/warnings/${testWarning._id}`,
-      );
+      const response = await request(app).get(`/api/warnings/${testWarning._id}`);
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(testWarning._id.toString());
@@ -236,9 +234,7 @@ describe("Warning System", () => {
       expect(response.body.warnings).toBeDefined();
       expect(Array.isArray(response.body.warnings)).toBe(true);
       expect(response.body.warnings.length).toBeGreaterThan(0);
-      expect(
-        response.body.warnings[0].affected_locations[0].coordinates,
-      ).toEqual({
+      expect(response.body.warnings[0].affected_locations[0].coordinates).toEqual({
         latitude: 1.234,
         longitude: 5.678,
       });
@@ -281,9 +277,7 @@ describe("Warning System", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe(
-        "All images must be valid URLs starting with 'http'",
-      );
+      expect(response.body.error).toBe("All images must be valid URLs starting with 'http'");
     });
 
     test("should accept valid image URLs", async () => {
@@ -308,10 +302,7 @@ describe("Warning System", () => {
             },
           ],
           severity: "high",
-          images: [
-            "http://valid-url.com/image1.jpg",
-            "http://valid-url.com/image2.jpg",
-          ],
+          images: ["http://valid-url.com/image1.jpg", "http://valid-url.com/image2.jpg"],
         });
 
       expect(response.status).toBe(201);
