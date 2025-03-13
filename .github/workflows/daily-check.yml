@@ -2,7 +2,7 @@ name: Daily Check and Test
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs every day at midnight UTC
+    - cron: "0 0 * * *" # Runs every day at midnight UTC
   push:
     branches:
       - development
@@ -12,42 +12,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Check for changes
-      id: check_changes
-      run: |
-        git fetch origin test
-        git diff --exit-code origin/development origin/test
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git fetch origin test
+          git diff --exit-code origin/development origin/test
 
-    - name: Push to test branch
-      if: steps.check_changes.outcome == 'failure'
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git checkout development
-        git push origin HEAD:test
+      - name: Push to test branch
+        if: steps.check_changes.outcome == 'failure'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout development
+          git push origin HEAD:test
 
-    - name: Run tests
-      if: steps.check_changes.outcome == 'failure'
-      run: |
-        npm install
-        npm test
+      - name: Run tests
+        if: steps.check_changes.outcome == 'failure'
+        run: |
+          npm install
+          npm test
 
-    - name: Notify via email
-      if: always()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        username: ${{ secrets.SMTP_USERNAME }}
-        password: ${{ secrets.SMTP_PASSWORD }}
-        subject: Daily Test Results
-        to: you@example.com
-        from: github-actions@example.com
-        content_type: text/html
-        body: |
-          Tests have passed successfully.
+      - name: Notify via email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: Daily Test Results
+          to: you@example.com
+          from: github-actions@example.com
+          content_type: text/html
+          body: |
+            Tests have passed successfully.

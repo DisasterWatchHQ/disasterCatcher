@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+dist/
+build/
+logs/
+*.test.js
+jest.config.js
