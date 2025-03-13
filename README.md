@@ -3,6 +3,7 @@
 A robust backend system for managing disaster-related resources, warnings, and user feedback.
 
 ## Table of Contents
+
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -37,12 +38,14 @@ A robust backend system for managing disaster-related resources, warnings, and u
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd disasterCatcher
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -50,11 +53,13 @@ npm install
 3. Set up environment variables (see Environment Variables section)
 
 4. Start the server:
+
 ```bash
 npm start
 ```
 
 For development:
+
 ```bash
 npm run dev
 ```
@@ -75,9 +80,11 @@ NODE_ENV=development
 ### Authentication
 
 #### POST /api/users/login
+
 Login user and get JWT token.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -86,6 +93,7 @@ Login user and get JWT token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -100,9 +108,11 @@ Login user and get JWT token.
 ```
 
 #### POST /api/users/forgot-password
+
 Request password reset.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -110,9 +120,11 @@ Request password reset.
 ```
 
 #### POST /api/users/reset-password
+
 Reset password with token.
 
 **Request Body:**
+
 ```json
 {
   "token": "reset_token",
@@ -123,22 +135,27 @@ Reset password with token.
 ### Users
 
 #### GET /api/users
+
 Get all users (admin only).
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 #### PATCH /api/users/preferences
+
 Update user preferences.
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "notification_preferences": {
@@ -152,14 +169,17 @@ Authorization: Bearer <token>
 ### Resources
 
 #### POST /api/resources
+
 Create a new resource.
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Resource Name",
@@ -193,9 +213,11 @@ Authorization: Bearer <token>
 ```
 
 #### GET /api/resources/facilities
+
 Get facilities with filters.
 
 **Query Parameters:**
+
 - type: facility type
 - availability_status: current status
 - city: city name
@@ -204,29 +226,36 @@ Get facilities with filters.
 - maxDistance: maximum distance in meters
 
 #### GET /api/resources/guides
+
 Get guides with filters.
 
 **Query Parameters:**
+
 - type: guide type
 - tags: comma-separated tags
 
 #### GET /api/resources/emergency-contacts
+
 Get emergency contacts with filters.
 
 **Query Parameters:**
+
 - emergency_level: high|medium|low
 
 ### Warnings
 
 #### POST /api/warnings
+
 Create a new warning.
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "title": "Warning Title",
@@ -244,12 +273,15 @@ Authorization: Bearer <token>
 ```
 
 #### GET /api/warnings/active
+
 Get active warnings.
 
 #### GET /api/warnings
+
 Get warnings with filters.
 
 **Query Parameters:**
+
 - disaster_category: category of disaster
 - severity: warning severity
 - status: warning status
@@ -260,14 +292,17 @@ Get warnings with filters.
 ### Feedback
 
 #### POST /api/feedback
+
 Submit feedback.
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "feedback_type": "bug|feature_request|improvement|other",
@@ -276,21 +311,26 @@ Authorization: Bearer <token>
 ```
 
 #### GET /api/feedback
+
 Get all feedback.
 
 **Query Parameters:**
+
 - feedback_type: type of feedback
 - status: feedback status
 
 #### PUT /api/feedback/:id
+
 Update feedback status (admin only).
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "status": "pending|in_progress|resolved|rejected",
@@ -303,14 +343,17 @@ Authorization: Bearer <token>
 ### Notifications
 
 #### PATCH /api/users/push-token
+
 Update user's push notification token.
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "push_token": "device_push_token"
@@ -320,6 +363,7 @@ Authorization: Bearer <token>
 ## Models
 
 ### User Model
+
 ```javascript
 {
   name: String,
@@ -345,6 +389,7 @@ Authorization: Bearer <token>
 ```
 
 ### Resource Model
+
 ```javascript
 {
   name: String,
@@ -378,6 +423,7 @@ Authorization: Bearer <token>
 ```
 
 ### Warning Model
+
 ```javascript
 {
   title: String,
@@ -404,6 +450,7 @@ Authorization: Bearer <token>
 ```
 
 ### Feedback Model
+
 ```javascript
 {
   user_id: ObjectId,
@@ -423,16 +470,19 @@ Authorization: Bearer <token>
 ## Testing
 
 Run tests:
+
 ```bash
 npm test
 ```
 
 Run tests with coverage:
+
 ```bash
 npm run test:coverage
 ```
 
 The test suite includes:
+
 - Unit tests for models and controllers
 - Integration tests for API endpoints
 - Authentication and authorization tests
