@@ -40,19 +40,10 @@ export const verifyReport = async (req, res) => {
     const reportId = req.params.id;
     const verifyingUser = req.user;
 
-    console.log("Verifying report:", {
-      reportId,
-      severity,
-      notes,
-      user: verifyingUser,
-    });
-
     const report = await UserReports.findById(reportId);
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
-
-    console.log("Before update:", report);
 
     if (report.verification_status !== "pending") {
       return res.status(400).json({
@@ -76,8 +67,6 @@ export const verifyReport = async (req, res) => {
     };
 
     const updatedReport = await report.save();
-
-    console.log("After update:", updatedReport);
 
     await createSystemLog(
       verifyingUser._id,
@@ -108,14 +97,10 @@ export const dismissReport = async (req, res) => {
     const reportId = req.params.id;
     const user = req.user;
 
-    console.log("Dismissing report:", { reportId, notes, user });
-
     const report = await UserReports.findById(reportId);
     if (!report) {
       return res.status(404).json({ error: "Report not found" });
     }
-
-    console.log("Before update:", report);
 
     const originalState = report.toJSON();
 
@@ -127,8 +112,6 @@ export const dismissReport = async (req, res) => {
     };
 
     const updatedReport = await report.save();
-
-    console.log("After update:", updatedReport);
 
     await createSystemLog(
       user._id,
@@ -511,8 +494,6 @@ export const getFeedReports = async (req, res) => {
       query["location.address.district"] = district;
     }
 
-    console.log("Query:", query); // Add logging to debug
-
     const reports = await UserReports.find(query)
       .sort({ date_time: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -520,8 +501,6 @@ export const getFeedReports = async (req, res) => {
       .lean();
 
     const total = await UserReports.countDocuments(query);
-
-    console.log(`Found ${reports.length} reports`); // Add logging
 
     res.status(200).json({
       success: true,

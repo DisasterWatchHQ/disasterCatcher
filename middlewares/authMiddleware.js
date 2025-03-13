@@ -70,8 +70,6 @@ export const verifyVerifiedUser = async (req, res, next) => {
 };
 
 export const verifyToken = async (req, res, next) => {
-  console.log("Cookies:", req.cookies);
-  console.log("Headers:", req.headers);
 
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
