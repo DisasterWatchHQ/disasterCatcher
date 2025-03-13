@@ -18,16 +18,15 @@ import {
   verifyVerifiedUser,
   verifyToken,
 } from "../middlewares/authMiddleware.js";
-// import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
 router.get("/feed", getPublicFeed);
 router.post("/", createUserReport);
 router.get("/public", getUserReports);
-router.get('/reports', getFeedReports);
-router.get('/feedstats', getFeedStats);
-router.get('/updates', getFeedUpdates);
+router.get("/reports", getFeedReports);
+router.get("/feedstats", getFeedStats);
+router.get("/updates", getFeedUpdates);
 
 router.use(protectRoute, verifyToken);
 

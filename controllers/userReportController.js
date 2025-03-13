@@ -23,7 +23,7 @@ export const createUserReport = async (req, res) => {
       disaster_category,
       description,
       location,
-      reporter_type: "anonymous", // or handle authentication if implemented
+      reporter_type: "anonymous",
     };
 
     const newReport = await UserReports.create(reportData);
@@ -59,7 +59,7 @@ export const verifyReport = async (req, res) => {
         error: `Report is already ${report.verification_status}`,
       });
     }
-    
+
     const verificationTime = Math.round(
       (new Date() - report.createdAt) / (1000 * 60),
     );

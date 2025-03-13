@@ -91,7 +91,14 @@ export const getAllUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const { id } = req.params;
+    let id;
+
+    // If using /me route, get ID from authenticated user
+    if (req.path === "/me") {
+      id = req.user._id;
+    } else {
+      id = req.params.id;
+    }
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -122,8 +129,14 @@ export const getUserById = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updates = { ...req.body };
+    let id;
+
+    // If using /me route, get ID from authenticated user
+    if (req.path === "/me") {
+      id = req.user._id;
+    } else {
+      id = req.params.id;
+    }
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -132,6 +145,7 @@ export const updateUser = async (req, res) => {
       });
     }
 
+    const updates = { ...req.body };
     delete updates.password;
 
     const user = await User.findByIdAndUpdate(
@@ -162,7 +176,14 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
-    const { id } = req.params;
+    let id;
+
+    // If using /me route, get ID from authenticated user
+    if (req.path === "/me") {
+      id = req.user._id;
+    } else {
+      id = req.params.id;
+    }
 
     const user = await User.findByIdAndDelete(id);
 
@@ -209,11 +230,9 @@ export const authenticateUser = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" },
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -295,7 +314,7 @@ export const changePassword = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email, workId, department } = req.body;
-    
+
     if (!email || !workId || !department) {
       return res.status(400).json({
         success: false,
@@ -303,10 +322,10 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ 
+    const user = await User.findOne({
       email: email.toLowerCase(),
       workId: workId,
-      associated_department: department
+      associated_department: department,
     });
 
     if (!user) {
@@ -333,28 +352,29 @@ export const forgotPassword = async (req, res) => {
 
     // Send email using nodemailer
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
+        pass: process.env.EMAIL_PASSWORD,
+      },
     });
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL, // Send to admin email
-      subject: 'Password Reset Request',
-      html: emailContent
+      subject: "Password Reset Request",
+      html: emailContent,
     };
 
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({
       success: true,
-      message: "Password reset instructions have been sent to the administrator.",
+      message:
+        "Password reset instructions have been sent to the administrator.",
     });
   } catch (error) {
-    console.error('Forgot Password Error:', error);
+    console.error("Forgot Password Error:", error);
     res.status(500).json({
       success: false,
       message: error.message || "Error processing forgot password request.",
@@ -366,10 +386,7 @@ export const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
 
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
       passwordResetToken: hashedToken,
@@ -408,7 +425,7 @@ export const updatePreferences = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { preferences } },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).select("-password");
 
     if (!user) {
@@ -446,7 +463,7 @@ export const updatePushToken = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { pushToken } },
-      { new: true }
+      { new: true },
     ).select("-password");
 
     if (!user) {
@@ -465,6 +482,55 @@ export const updatePushToken = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Error updating push token.",
+    });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format.",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No avatar file uploaded.",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          avatar: `/uploads/avatars/${req.file.filename}`,
+          avatarUpdatedAt: new Date(),
+        },
+      },
+      { new: true, runValidators: true },
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Avatar updated successfully.",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error updating avatar.",
     });
   }
 };

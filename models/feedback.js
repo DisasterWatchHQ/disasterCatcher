@@ -5,7 +5,7 @@ const feedbackSchema = new Schema(
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false
+      required: false,
     },
     feedback_type: {
       type: String,
@@ -33,7 +33,7 @@ const feedbackSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 feedbackSchema.set("toJSON", {

@@ -4,7 +4,7 @@ import { createSystemLog } from "./adminLogsController.js";
 export const createFeedback = async (req, res) => {
   try {
     const newFeedback = await Feedback.create({
-      user_id: req.user?.id, // Optional user ID if logged in
+      user_id: req.user?.id,
       feedback_type: req.body.feedback_type,
       message: req.body.message,
       status: "pending",
@@ -95,7 +95,7 @@ export const updateFeedback = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     res.status(200).json(updatedFeedback);
@@ -128,7 +128,7 @@ export const deleteFeedback = async (req, res) => {
       {
         previous_state: feedback.toObject(),
         message: `Feedback was deleted`,
-      }
+      },
     );
 
     res.status(200).json({ message: "Feedback deleted successfully" });

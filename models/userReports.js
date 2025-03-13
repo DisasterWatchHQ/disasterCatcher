@@ -41,12 +41,12 @@ const userReportSchema = new Schema(
     images: {
       type: [String],
       validate: {
-        validator: function(v) {
-          return !v.length || v.every(url => typeof url === 'string');
+        validator: function (v) {
+          return !v.length || v.every((url) => typeof url === "string");
         },
-        message: 'All images must be valid paths or URLs'
+        message: "All images must be valid paths or URLs",
       },
-      required: false
+      required: false,
     },
     reporter: {
       type: Schema.Types.ObjectId,

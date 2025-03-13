@@ -85,7 +85,7 @@ const warningSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 warningSchema.set("toJSON", {
@@ -93,7 +93,7 @@ warningSchema.set("toJSON", {
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.__v;
-  }
+  },
 });
 
 const Warning = mongoose.model("Warning", warningSchema);

@@ -242,7 +242,7 @@ const updateActionStatus = async (req, res) => {
 
     action.status = status;
     const updatedWarning = await warning.save();
-    
+
     notificationController.broadcast(
       {
         type: "UPDATE_ACTION",
@@ -308,10 +308,16 @@ const resolveWarning = async (req, res) => {
       warning.affected_locations[0],
     );
 
-    await createSystemLog(req.user._id, "RESOLVE_WARNING", "warning", warning._id, {
-      message: `Warning resolved by ${req.user.name}`,
-      resolution_notes,
-    });
+    await createSystemLog(
+      req.user._id,
+      "RESOLVE_WARNING",
+      "warning",
+      warning._id,
+      {
+        message: `Warning resolved by ${req.user.name}`,
+        resolution_notes,
+      },
+    );
 
     res.status(200).json(updatedWarning);
   } catch (error) {
@@ -551,5 +557,5 @@ export {
   getWarningById,
   getActiveWarnings,
   getWarningsByLocation,
-  updateWarning
+  updateWarning,
 };

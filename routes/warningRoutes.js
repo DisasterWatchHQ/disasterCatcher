@@ -9,7 +9,7 @@ import {
   getWarningById,
   getActiveWarnings,
   getWarningsByLocation,
-  updateWarning
+  updateWarning,
 } from "../controllers/warningController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 

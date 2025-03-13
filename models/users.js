@@ -15,7 +15,11 @@ const userPreferencesSchema = new Schema({
     radius: { type: Number, default: 50 }, // km
   },
   theme: {
-    mode: { type: String, enum: ["light", "dark", "system"], default: "system" },
+    mode: {
+      type: String,
+      enum: ["light", "dark", "system"],
+      default: "system",
+    },
   },
   language: { type: String, default: "en" },
 });
@@ -48,6 +52,14 @@ const userSchema = new Schema(
       required: [true, "Work ID is required"],
       unique: true,
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
+    avatarUpdatedAt: {
+      type: Date,
+      default: null,
+    },
     location: locationSchema,
     associated_department: {
       type: String,
@@ -71,6 +83,7 @@ const userSchema = new Schema(
     passwordResetToken: String,
     passwordResetExpires: Date,
     pushToken: String,
+    webPushSubscription: Object, // For web push notifications
   },
   {
     timestamps: true,
@@ -80,12 +93,12 @@ const userSchema = new Schema(
 );
 
 // Password reset methods
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
   this.passwordResetToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(resetToken)
-    .digest('hex');
+    .digest("hex");
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
   return resetToken;
 };
