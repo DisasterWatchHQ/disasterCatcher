@@ -39,7 +39,7 @@ app.use(
     origin: true, // Allow all origins during development
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
-  }),
+  })
 );
 
 app.use(express.json());
