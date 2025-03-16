@@ -47,6 +47,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(morgan("combined", { stream }));
 
+// Add root route for health checks
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "success", message: "Server is running" });
+});
+
 app.use("/api/uploads", express.static("uploads"));
 app.use("/api", routes);
 
