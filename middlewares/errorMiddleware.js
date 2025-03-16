@@ -54,29 +54,29 @@ export const errorHandler = (err, req, res, next) => {
     },
   });
 
-  if (err instanceof ValidationError) {
+  if (err.name === "ValidationError" || err instanceof ValidationError) {
     return res.status(400).json({
       status: "fail",
       message: err.message,
     });
   }
 
-  if (err instanceof JsonWebTokenError) {
+  if (err.name === "JsonWebTokenError" || err instanceof JsonWebTokenError) {
     return res.status(401).json({
       status: "fail",
       message: "Invalid token",
     });
   }
 
-  if (err instanceof TokenExpiredError) {
+  if (err.name === "TokenExpiredError" || err instanceof TokenExpiredError) {
     return res.status(401).json({
       status: "fail",
       message: "Token expired",
     });
   }
 
-  if (err instanceof MongooseValidationError) {
-    const errors = Object.values(err.errors).map((el) => el.message);
+  if (err.name === "ValidationError" || err instanceof MongooseValidationError) {
+    const errors = Object.values(err.errors || {}).map((el) => el.message);
 
     return res.status(400).json({
       status: "fail",
