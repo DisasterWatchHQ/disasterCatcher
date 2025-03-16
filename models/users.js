@@ -15,7 +15,11 @@ const userPreferencesSchema = new Schema({
     radius: { type: Number, default: 50 }, // km
   },
   theme: {
-    mode: { type: String, enum: ["light", "dark", "system"], default: "system" },
+    mode: {
+      type: String,
+      enum: ["light", "dark", "system"],
+      default: "system",
+    },
   },
   language: { type: String, default: "en" },
 });
@@ -33,10 +37,7 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-        "Please enter a valid email",
-      ],
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
@@ -47,6 +48,14 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Work ID is required"],
       unique: true,
+    },
+    avatar: {
+      type: String,
+      default: null,
+    },
+    avatarUpdatedAt: {
+      type: Date,
+      default: null,
     },
     location: locationSchema,
     associated_department: {
@@ -71,30 +80,33 @@ const userSchema = new Schema(
     passwordResetToken: String,
     passwordResetExpires: Date,
     pushToken: String,
+    webPushSubscription: Object, // For web push notifications
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
+  }
 );
 
 // Password reset methods
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
   return resetToken;
 };
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) {
+    return next();
+  }
 
   try {
     const salt = await bcrypt.genSalt(10);
+
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
@@ -112,17 +124,17 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
+
   delete userObject.password;
   delete userObject.passwordResetToken;
   delete userObject.passwordResetExpires;
   delete userObject.__v;
+
   return userObject;
 };
 
-userSchema.index(
-  { "location.latitude": 1, "location.longitude": 1 },
-  { sparse: true },
-);
+userSchema.index({ "location.latitude": 1, "location.longitude": 1 }, { sparse: true });
 
 const User = mongoose.model("User", userSchema);
+
 export default User;

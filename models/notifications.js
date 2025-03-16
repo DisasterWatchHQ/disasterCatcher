@@ -34,7 +34,7 @@ const notificationSchema = new Schema(
     metadata: { type: Map, of: Schema.Types.Mixed, default: new Map() },
     pushToken: { type: String },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 notificationSchema.set("toJSON", {
@@ -46,4 +46,5 @@ notificationSchema.set("toJSON", {
 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
+
 export default Notification;

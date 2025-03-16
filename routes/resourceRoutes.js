@@ -9,11 +9,7 @@ import {
   updateResource,
   deleteResource,
 } from "../controllers/resourceController.js";
-import {
-  protectRoute,
-  verifyVerifiedUser,
-  verifyToken,
-} from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyVerifiedUser, verifyToken } from "../middlewares/authMiddleware.js";
 import Resource from "../models/resources.js";
 
 const router = express.Router();
@@ -26,12 +22,13 @@ router.get("/:id", getResourceById);
 
 router.use(protectRoute, verifyToken);
 
-router.post("/", verifyVerifiedUser, createResource);
-router.put("/:id", verifyVerifiedUser, updateResource);
-router.delete("/:id", verifyVerifiedUser, deleteResource);
+router.post("/", createResource);
+router.put("/:id", updateResource);
+router.delete("/:id", deleteResource);
 
-router.get("/verified/last-month", verifyVerifiedUser, async (req, res) => {
+router.get("/verified/last-month", async (req, res) => {
   const oneMonthAgo = new Date();
+
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
   const resources = await Resource.find({
@@ -41,7 +38,7 @@ router.get("/verified/last-month", verifyVerifiedUser, async (req, res) => {
   res.json({ success: true, data: resources });
 });
 
-router.get("/", verifyVerifiedUser, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const resources = await Resource.find()
       .populate("added_by", "name email")
