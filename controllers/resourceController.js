@@ -224,6 +224,7 @@ export const getNearbyFacilities = async (req, res) => {
     const query = {
       category: "facility",
       status: "active",
+      "location.type": "point",
       "location.coordinates": {
         $near: {
           $geometry: {
@@ -251,7 +252,12 @@ export const getNearbyFacilities = async (req, res) => {
       resources,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getNearbyFacilities error:", error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      message: "Error finding nearby facilities"
+    });
   }
 };
 
