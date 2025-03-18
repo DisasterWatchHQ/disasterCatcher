@@ -2,6 +2,7 @@ import { pushNotificationService } from "../services/pushNotificationService.js"
 import User from "../models/users.js";
 import WebPushSubscription from "../models/WebPushSubscription.js";
 import { sendNotification } from "../services/notificationService.js";
+import Notification from "../models/notifications.js";
 
 export const notificationController = {
   broadcast: async (message, location = null, radius = 50) => {
@@ -155,6 +156,24 @@ export const notificationController = {
     } catch (error) {
       console.error("Error getting notification subscriptions:", error);
       res.status(500).json({ message: "Error getting notification subscriptions" });
+    }
+  },
+
+  getUnreadCount: async (req, res) => {
+    try {
+      const userId = req.user._id;
+      const count = await Notification.countDocuments({
+        user_id: userId,
+        status: "unread"
+      });
+
+      res.json({
+        success: true,
+        count
+      });
+    } catch (error) {
+      console.error("Error getting unread notifications count:", error);
+      res.status(500).json({ message: "Error getting unread notifications count" });
     }
   },
 };
