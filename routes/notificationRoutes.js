@@ -11,5 +11,6 @@ router.post("/web/unsubscribe", authenticate, notificationController.unsubscribe
 router.post("/web/subscribeweb", authenticate, notificationController.subscribe);
 router.post("/web/unsubscribeweb", authenticate, notificationController.unsubscribe);
 router.get("/web/subscriptions", authenticate, notificationController.getSubscriptions);
+router.get("/unread-count", authenticate, notificationController.getUnreadCount);
 
 export default router;
