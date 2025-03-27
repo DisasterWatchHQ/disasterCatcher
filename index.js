@@ -36,7 +36,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: true, // Allow all origins during development
+    origin: "https://disasterwatch.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
