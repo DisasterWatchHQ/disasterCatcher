@@ -34,13 +34,30 @@ const app = express();
 
 app.use(cookieParser());
 
+const allowedOrigins = ["https://disasterwatch.vercel.app"];
+
 app.use(
   cors({
-    origin: "https://disasterwatch.vercel.app",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: "https://disasterwatch.vercel.app",
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//     credentials: true,
+//   })
+// );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
