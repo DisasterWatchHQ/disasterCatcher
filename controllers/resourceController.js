@@ -16,7 +16,7 @@ export const createResource = async (req, res) => {
       tags,
       operatingHours,
       capacity,
-      emergencyLevel,
+      emergency_level,
     } = req.body;
 
     const resourceData = {
@@ -56,7 +56,7 @@ export const createResource = async (req, res) => {
     }
 
     if (category === "emergency_contact") {
-      resourceData.emergency_level = emergencyLevel;
+      resourceData.emergency_level = emergency_level;
     }
 
     const resource = new Resource(resourceData);
@@ -182,15 +182,15 @@ export const getGuides = async (req, res) => {
 
 export const getEmergencyContacts = async (req, res) => {
   try {
-    const { emergencyLevel } = req.query;
+    const { emergency_level } = req.query;
 
     const query = {
       category: "emergency_contact",
       status: "active",
     };
 
-    if (emergencyLevel) {
-      query.emergency_level = emergencyLevel;
+    if (emergency_level) {
+      query.emergency_level = emergency_level;
     }
 
     const resources = await Resource.find(query)
