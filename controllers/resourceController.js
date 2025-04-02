@@ -32,22 +32,15 @@ export const createResource = async (req, res) => {
 
     if (category === "facility") {
       const locationData = {
-        type: location.type,
-      };
-
-      if (location.type === "point") {
-        locationData.coordinates = location.coordinates.map((coord) => parseFloat(coord));
-      }
-
-      if (location.address) {
-        locationData.address = {
+        type: "address",
+        address: {
           formatted_address: location.address.formatted_address,
           city: location.address.city,
           district: location.address.district,
           province: location.address.province,
           details: location.address.details,
-        };
-      }
+        },
+      };
 
       resourceData.location = locationData;
       resourceData.availability_status = availabilityStatus;
@@ -210,54 +203,6 @@ export const getEmergencyContacts = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
-  }
-};
-
-export const getNearbyFacilities = async (req, res) => {
-  try {
-    const { latitude, longitude, maxDistance = 10000, type, availabilityStatus } = req.query;
-
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: "Latitude and longitude are required" });
-    }
-
-    const query = {
-      category: "facility",
-      status: "active",
-      "location.type": "point",
-      "location.coordinates": {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-          },
-          $maxDistance: parseFloat(maxDistance),
-        },
-      },
-    };
-
-    if (type) {
-      query.type = type;
-    }
-    if (availabilityStatus) {
-      query.availability_status = availabilityStatus;
-    }
-
-    const resources = await Resource.find(query)
-      .populate("added_by", "name email")
-      .sort({ "location.coordinates": 1 });
-
-    res.status(200).json({
-      success: true,
-      resources,
-    });
-  } catch (error) {
-    console.error("getNearbyFacilities error:", error);
-    res.status(500).json({ 
-      success: false,
-      error: error.message,
-      message: "Error finding nearby facilities"
-    });
   }
 };
 

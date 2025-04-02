@@ -4,29 +4,7 @@ const locationSchema = new Schema({
   type: {
     type: String,
     required: true,
-    enum: ["point", "address"],
-  },
-  coordinates: {
-    type: [Number],
-    required: function () {
-      return this.type === "point";
-    },
-    validate: {
-      validator: function (coords) {
-        return (
-          Array.isArray(coords) &&
-          coords.length === 2 &&
-          !isNaN(coords[0]) &&
-          !isNaN(coords[1]) &&
-          coords[0] >= -180 &&
-          coords[0] <= 180 &&
-          coords[1] >= -90 &&
-          coords[1] <= 90
-        );
-      },
-      message: "Coordinates must be valid [longitude, latitude] pairs",
-    },
-    index: "2dsphere",
+    enum: ["address"],
   },
   address: {
     formatted_address: String,
@@ -191,20 +169,6 @@ resourceSchema.methods.isOperational = function () {
     this.status === "active" &&
     (this.category !== "facility" || this.availability_status === "open")
   );
-};
-
-resourceSchema.statics.findNearby = async function (coordinates, maxDistance = 5000) {
-  return this.find({
-    "location.coordinates": {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: coordinates,
-        },
-        $maxDistance: maxDistance,
-      },
-    },
-  });
 };
 
 resourceSchema.statics.findByType = async function (type) {

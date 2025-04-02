@@ -4,7 +4,6 @@ import {
   getFacilities,
   getGuides,
   getEmergencyContacts,
-  getNearbyFacilities,
   getResourceById,
   updateResource,
   deleteResource,
@@ -17,7 +16,6 @@ const router = express.Router();
 router.get("/facilities", getFacilities);
 router.get("/guides", getGuides);
 router.get("/emergency-contacts", getEmergencyContacts);
-router.get("/facilities/nearby", getNearbyFacilities);
 router.get("/:id", getResourceById);
 
 router.use(protectRoute, verifyToken);
