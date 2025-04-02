@@ -98,17 +98,21 @@ export const getUserById = async (req, res) => {
   try {
     let id;
 
-    // If using /me route, get ID from authenticated user
-    if (req.path === "/me") {
+    // Log the request path to debug
+    console.log("Request path:", req.path);
+
+    // Change the path check to be more robust
+    if (req.path === "/me" || req.originalUrl.endsWith("/me")) {
       id = req.user._id;
     } else {
       id = req.params.id;
     }
 
-    if (!isValidObjectId(id)) {
+    // Add validation to ensure id exists
+    if (!id) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID format.",
+        message: "User ID is required",
       });
     }
 
