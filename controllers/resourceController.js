@@ -231,11 +231,23 @@ export const updateResource = async (req, res) => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
-    const updatedResource = await Resource.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, last_verified: new Date() },
-      { new: true, runValidators: true }
-    ).populate("added_by", "name email");
+    // Prepare update data
+    const updateData = {
+      ...req.body,
+      last_verified: new Date(),
+    };
+
+    // Ensure location has the correct structure
+    if (updateData.location) {
+      updateData.location = {
+        address: updateData.location.address || {},
+      };
+    }
+
+    const updatedResource = await Resource.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("added_by", "name email");
 
     await createSystemLog(req.user.id, "UPDATE_RESOURCE", "resource", resource._id, {
       previous_state: resource.toObject(),
@@ -248,7 +260,11 @@ export const updateResource = async (req, res) => {
       resource: updatedResource,
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Update error:", error);
+    res.status(400).json({
+      error: error.message,
+      details: error.errors,
+    });
   }
 };
 

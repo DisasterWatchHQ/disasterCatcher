@@ -1,11 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
 const locationSchema = new Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ["address"],
-  },
   address: {
     formatted_address: String,
     city: String,
