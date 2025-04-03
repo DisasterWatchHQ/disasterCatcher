@@ -8,7 +8,7 @@ import {
   updateResource,
   deleteResource,
 } from "../controllers/resourceController.js";
-import { protectRoute, verifyVerifiedUser, verifyToken } from "../middlewares/authMiddleware.js";
+import { protectRoute, verifyToken } from "../middlewares/authMiddleware.js";
 import Resource from "../models/resources.js";
 
 const router = express.Router();
